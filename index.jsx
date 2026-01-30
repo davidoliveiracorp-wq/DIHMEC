@@ -5,6 +5,9 @@ import ReactDOM from 'react-dom/client';
 const App = () => {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+      <p style={{ marginBottom: '16px' }}>
+        <a href="/">← Voltar ao Cadastro</a>
+      </p>
       <h1>Diagrama Lucid React</h1>
 
       <svg
