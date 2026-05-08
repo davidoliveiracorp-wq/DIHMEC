@@ -1,7 +1,12 @@
 (function () {
   'use strict';
 
-  const SUPER_ADMIN_EMAIL = 'dasioli@gmail.com';
+  const SUPER_ADMIN_EMAILS = ['dasioli@gmail.com', 'edisioli@gmail.com'];
+  // Mantido para compatibilidade com integrações antigas
+  const SUPER_ADMIN_EMAIL = SUPER_ADMIN_EMAILS[0];
+  function isSuperAdminEmail(email) {
+    return SUPER_ADMIN_EMAILS.includes(String(email || '').trim().toLowerCase());
+  }
   const STORAGE_USERS = 'dihmec_users';
   const STORAGE_SESSION = 'dihmec_session';
   const STORAGE_PERMISSIONS = 'dihmec_permissions';
@@ -151,7 +156,7 @@
     if (password.length < 6) throw new Error('A senha deve ter no mínimo 6 caracteres.');
     const users = getUsers();
     if (users.some((u) => u.email === email)) throw new Error('E-mail já cadastrado.');
-    const role = email === SUPER_ADMIN_EMAIL ? 'superadmin' : 'user';
+    const role = isSuperAdminEmail(email) ? 'superadmin' : 'user';
     const passwordHash = await hashPassword(password);
     const user = { name, email, passwordHash, role, createdAt: Date.now() };
     users.push(user);
@@ -190,11 +195,25 @@
   }
 
   function ensureSuperAdminPlaceholder() {
+    // Migração: promove para superadmin qualquer usuário já cadastrado cujo
+    // e-mail esteja em SUPER_ADMIN_EMAILS mas que ainda esteja como "user"
+    // (situação possível quando um e-mail é adicionado à lista depois do
+    // cadastro inicial).
     const users = getUsers();
-    if (!users.some((u) => u.email === SUPER_ADMIN_EMAIL)) {
-      // Apenas marca o e-mail como reservado para super admin; o registro real
-      // será feito quando o usuário se cadastrar com este e-mail (ele receberá
-      // automaticamente o papel "superadmin").
+    let changed = false;
+    users.forEach((u) => {
+      if (isSuperAdminEmail(u.email) && u.role !== 'superadmin') {
+        u.role = 'superadmin';
+        changed = true;
+      }
+    });
+    if (changed) {
+      saveUsers(users);
+      const session = getSession();
+      if (session && isSuperAdminEmail(session.email) && session.role !== 'superadmin') {
+        session.role = 'superadmin';
+        setSession(session);
+      }
     }
   }
 
@@ -1005,6 +1024,8 @@
     isSlotBooked,
     MENUS,
     SUPER_ADMIN_EMAIL,
+    SUPER_ADMIN_EMAILS,
+    isSuperAdminEmail,
     WHATSAPP_NUMBER,
     BUSINESS_HOURS,
   };
