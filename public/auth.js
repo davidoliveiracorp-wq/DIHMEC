@@ -135,6 +135,67 @@
     ].join('\n');
   }
 
+  // ---------- Cadastros (placas / clientes / veículos) ----------
+  function getRegisteredPlates() {
+    try {
+      const html = localStorage.getItem('dihmec_vehicles_html') || '';
+      if (!html.trim()) return [];
+      const tmp = document.createElement('tbody');
+      tmp.innerHTML = html;
+      return Array.from(tmp.querySelectorAll('tr'))
+        .map((r) => r.children[0] && r.children[0].textContent.trim().toUpperCase())
+        .filter(Boolean);
+    } catch (e) { return []; }
+  }
+  function isPlateRegistered(plate) {
+    const p = String(plate || '').trim().toUpperCase();
+    return !!p && getRegisteredPlates().includes(p);
+  }
+  function registerVehicleFromSchedule({ name, phone, plate, vehicle }) {
+    // Divide "Marca Modelo" no primeiro espaço
+    const parts = String(vehicle || '').trim().split(/\s+/);
+    const brand = parts.shift() || '-';
+    const model = parts.join(' ') || '-';
+    const customerHtml = localStorage.getItem('dihmec_customers_html') || '';
+    const vehicleHtml  = localStorage.getItem('dihmec_vehicles_html')  || '';
+    const customerId = Date.now();
+
+    const newCustomerRow =
+      `<tr>` +
+        `<td>${escapeHtml(name)}</td>` +
+        `<td>-</td>` +
+        `<td>${escapeHtml(phone || '-')}</td>` +
+        `<td>${escapeHtml(plate)}</td>` +
+        `<td>${escapeHtml(model)}</td>` +
+        `<td>${escapeHtml(brand)}</td>` +
+        `<td>-</td>` +
+        `<td>-</td>` +
+        `<td><div class="action-buttons">` +
+          `<button class="btn-action btn-edit" onclick="editCustomer(${customerId})">Editar</button>` +
+          `<button class="btn-action btn-delete" onclick="deleteCustomer(${customerId})">Excluir</button>` +
+        `</div></td>` +
+      `</tr>`;
+
+    const newVehicleRow =
+      `<tr>` +
+        `<td>${escapeHtml(plate)}</td>` +
+        `<td>${escapeHtml(model)}</td>` +
+        `<td>${escapeHtml(brand)}</td>` +
+        `<td>-</td>` +
+        `<td>-</td>` +
+        `<td>${escapeHtml(name)}</td>` +
+        `<td>-</td>` +
+        `<td>${escapeHtml(phone || '-')}</td>` +
+        `<td><div class="action-buttons">` +
+          `<button class="btn-action btn-edit" onclick="editVehicle('${escapeHtml(plate)}')">Editar</button>` +
+          `<button class="btn-action btn-delete" onclick="deleteVehicle('${escapeHtml(plate)}')">Excluir</button>` +
+        `</div></td>` +
+      `</tr>`;
+
+    localStorage.setItem('dihmec_customers_html', customerHtml + newCustomerRow);
+    localStorage.setItem('dihmec_vehicles_html',  vehicleHtml  + newVehicleRow);
+  }
+
   function listUsers() {
     const users = getUsers();
     const perms = getPermissions();
@@ -228,18 +289,19 @@
     }
     .auth-card {
       width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
-      background: #fff; border-radius: 16px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.25);
-      padding: 28px 28px 24px; color: #1a1d24;
+      background: #1f1f23; border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+      padding: 28px 28px 24px; color: #e8e8e8;
       transition: max-width .25s ease;
+      border: 1px solid #2c2c33;
     }
     .auth-card.wide { max-width: 560px; }
     .auth-card h2 {
       margin: 0 0 4px; font-size: 22px; font-weight: 700;
-      color: #1a1d24;
+      color: #f5f5f5;
     }
     .auth-card p.auth-sub {
-      margin: 0 0 20px; color: #5f6368; font-size: 13px;
+      margin: 0 0 20px; color: #a0a0a8; font-size: 13px;
     }
 
     /* Banner DIHMEC dentro do modal */
@@ -306,31 +368,44 @@
       filter: brightness(0) invert(1);
     }
     .auth-tabs {
-      display: flex; background: #f0f2f5; border-radius: 10px;
+      display: flex; background: #16161a; border-radius: 10px;
       padding: 4px; margin-bottom: 18px;
+      border: 1px solid #2c2c33;
     }
     .auth-tab {
       flex: 1; padding: 8px 12px; text-align: center;
       cursor: pointer; border-radius: 8px; font-size: 13px; font-weight: 600;
-      color: #5f6368; transition: all .2s ease;
+      color: #a0a0a8; transition: all .2s ease;
       border: none; background: transparent;
     }
-    .auth-tab.active { background: #fff; color: #1a1d24; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .auth-tab.active { background: #2a2a32; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
     .auth-field { margin-bottom: 12px; }
     .auth-field label {
-      display: block; font-size: 12px; font-weight: 600; color: #5f6368;
+      display: block; font-size: 12px; font-weight: 600; color: #b0b0b8;
       margin-bottom: 6px;
     }
-    .auth-field input {
-      width: 100%; padding: 10px 12px; border: 1px solid #e8eaed;
+    .auth-field input,
+    .auth-field textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #3a3a42;
       border-radius: 8px; font-size: 14px; font-family: inherit;
-      background: #fff; color: #1a1d24; outline: none;
+      background: #16161a; color: #f0f0f0; outline: none;
       transition: border-color .2s ease, box-shadow .2s ease;
     }
-    .auth-field input:focus {
+    .auth-field input::placeholder,
+    .auth-field textarea::placeholder { color: #5a5a62; }
+    .auth-field input:focus,
+    .auth-field textarea:focus {
       border-color: #e85d04;
-      box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.12);
+      box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.18);
     }
+    .auth-field input[type=date] { color-scheme: dark; }
+    .auth-plate-status {
+      margin-top: 6px; font-size: 11px; font-weight: 500;
+      display: none;
+    }
+    .auth-plate-status.show { display: block; }
+    .auth-plate-status.found { color: #6dd58c; }
+    .auth-plate-status.missing { color: #ffb54a; }
     .auth-submit {
       width: 100%; margin-top: 8px;
       padding: 11px 14px; border: none; border-radius: 8px;
@@ -342,18 +417,20 @@
     .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
     .auth-error {
       display: none; margin: 8px 0 0;
-      padding: 8px 10px; background: #fdecea; color: #b3261e;
+      padding: 8px 10px; background: rgba(220, 53, 69, 0.15); color: #ff8a8a;
+      border: 1px solid rgba(220, 53, 69, 0.35);
       border-radius: 6px; font-size: 12px;
     }
     .auth-error.show { display: block; }
     .auth-success {
       display: none; margin: 8px 0 0;
-      padding: 8px 10px; background: #e6f4ea; color: #1e7e34;
+      padding: 8px 10px; background: rgba(40, 167, 69, 0.15); color: #6dd58c;
+      border: 1px solid rgba(40, 167, 69, 0.35);
       border-radius: 6px; font-size: 12px;
     }
     .auth-success.show { display: block; }
     .auth-hint {
-      margin-top: 12px; font-size: 11px; color: #80868b; text-align: center;
+      margin-top: 12px; font-size: 11px; color: #6a6a72; text-align: center;
     }
     .auth-userbar {
       position: fixed; top: 12px; right: 12px; z-index: 9998;
@@ -376,17 +453,7 @@
     }
     .auth-userbar button:hover { text-decoration: underline; }
 
-    /* Agendamento */
-    .auth-field textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid #e8eaed;
-      border-radius: 8px; font-size: 14px; font-family: inherit;
-      background: #fff; color: #1a1d24; outline: none; resize: vertical;
-      transition: border-color .2s ease, box-shadow .2s ease;
-    }
-    .auth-field textarea:focus {
-      border-color: #e85d04;
-      box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.12);
-    }
+    /* Agendamento (tema escuro) */
     .sched-grid {
       display: grid; gap: 12px; grid-template-columns: 1fr 1fr;
     }
@@ -396,37 +463,37 @@
       margin-top: 4px;
     }
     .sched-slot {
-      padding: 8px 4px; border: 1px solid #e8eaed; border-radius: 6px;
-      background: #fff; cursor: pointer; font-size: 12px; font-weight: 500;
-      font-family: inherit; text-align: center; color: #1a1d24;
+      padding: 8px 4px; border: 1px solid #3a3a42; border-radius: 6px;
+      background: #16161a; cursor: pointer; font-size: 12px; font-weight: 500;
+      font-family: inherit; text-align: center; color: #e0e0e6;
       transition: all .15s ease;
     }
     .sched-slot:hover:not(.booked):not(:disabled) {
-      border-color: #e85d04; background: #fff7f0;
+      border-color: #e85d04; background: #2a1f17;
     }
     .sched-slot.selected {
       background: #e85d04; color: #fff; border-color: #e85d04;
-      box-shadow: 0 2px 6px rgba(232, 93, 4, 0.3);
+      box-shadow: 0 2px 6px rgba(232, 93, 4, 0.4);
     }
     .sched-slot.booked, .sched-slot:disabled {
-      background: #f0f2f5; color: #b0b3b8; cursor: not-allowed;
-      text-decoration: line-through;
+      background: #232328; color: #5a5a62; cursor: not-allowed;
+      text-decoration: line-through; border-color: #2c2c33;
     }
     .sched-empty {
-      grid-column: 1 / -1; color: #5f6368; font-size: 12px;
+      grid-column: 1 / -1; color: #80808a; font-size: 12px;
       text-align: center; padding: 12px;
     }
     .sched-legend {
-      display: flex; gap: 12px; font-size: 11px; color: #5f6368;
+      display: flex; gap: 12px; font-size: 11px; color: #80808a;
       margin-top: 8px; justify-content: center; flex-wrap: wrap;
     }
     .sched-legend span { display: inline-flex; align-items: center; gap: 4px; }
     .sched-legend .dot {
       width: 10px; height: 10px; border-radius: 3px; display: inline-block;
     }
-    .sched-legend .dot.free { background: #fff; border: 1px solid #e8eaed; }
+    .sched-legend .dot.free { background: #16161a; border: 1px solid #3a3a42; }
     .sched-legend .dot.sel { background: #e85d04; }
-    .sched-legend .dot.busy { background: #f0f2f5; }
+    .sched-legend .dot.busy { background: #232328; }
 
     /* Modal de Administração */
     .admin-overlay {
@@ -504,6 +571,43 @@
     .admin-btn.primary:hover { background: #d45103; }
     .admin-btn.secondary { background: #f0f2f5; color: #1a1d24; }
     .admin-btn.secondary:hover { background: #e8eaed; }
+
+    /* Criar usuário (dentro do painel de Administração) */
+    .admin-newuser {
+      border: 1px solid #e8eaed; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 14px; background: #fafafa;
+    }
+    .admin-newuser h3 {
+      margin: 0 0 8px; font-size: 13px; font-weight: 700;
+      color: #1a1d24; letter-spacing: .3px;
+    }
+    .admin-newuser-grid {
+      display: grid; gap: 8px;
+      grid-template-columns: 1.4fr 1.4fr 1fr auto;
+      align-items: end;
+    }
+    .admin-newuser-grid label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: #5f6368; margin-bottom: 4px;
+    }
+    .admin-newuser-grid input {
+      width: 100%; padding: 8px 10px; border: 1px solid #e8eaed;
+      border-radius: 6px; font-size: 13px; font-family: inherit;
+      outline: none; background: #fff;
+    }
+    .admin-newuser-grid input:focus {
+      border-color: #e85d04;
+      box-shadow: 0 0 0 3px rgba(232,93,4,0.10);
+    }
+    .admin-newuser-msg {
+      margin-top: 8px; font-size: 12px; display: none;
+    }
+    .admin-newuser-msg.show { display: block; }
+    .admin-newuser-msg.error { color: #b3261e; }
+    .admin-newuser-msg.ok { color: #1e7e34; }
+    @media (max-width: 640px) {
+      .admin-newuser-grid { grid-template-columns: 1fr 1fr; }
+    }
   `;
 
   function injectStyle() {
@@ -575,8 +679,7 @@
         <h2 id="auth-title">Bem-vindo</h2>
         <p class="auth-sub">Entre ou crie sua conta para continuar.</p>
         <div class="auth-tabs" role="tablist">
-          <button type="button" class="auth-tab active" data-tab="login" role="tab">Entrar</button>
-          <button type="button" class="auth-tab" data-tab="register" role="tab">Cadastrar</button>
+          <button type="button" class="auth-tab active" data-tab="login" role="tab">Login</button>
           <button type="button" class="auth-tab" data-tab="schedule" role="tab">Agendar</button>
         </div>
 
@@ -591,24 +694,6 @@
           </div>
           <button type="submit" class="auth-submit">Entrar</button>
           <div class="auth-error" id="auth-login-error"></div>
-        </form>
-
-        <form id="auth-form-register" novalidate style="display:none">
-          <div class="auth-field">
-            <label for="auth-reg-name">Nome completo</label>
-            <input type="text" id="auth-reg-name" autocomplete="name" required />
-          </div>
-          <div class="auth-field">
-            <label for="auth-reg-email">E-mail</label>
-            <input type="email" id="auth-reg-email" autocomplete="email" required />
-          </div>
-          <div class="auth-field">
-            <label for="auth-reg-password">Senha</label>
-            <input type="password" id="auth-reg-password" autocomplete="new-password" minlength="6" required />
-          </div>
-          <button type="submit" class="auth-submit">Cadastrar</button>
-          <div class="auth-error" id="auth-reg-error"></div>
-          <div class="auth-success" id="auth-reg-success"></div>
         </form>
 
         <form id="auth-form-schedule" novalidate style="display:none">
@@ -640,6 +725,7 @@
             <div class="auth-field">
               <label for="sched-plate">Placa</label>
               <input type="text" id="sched-plate" placeholder="ABC1D23" maxlength="7" required />
+              <div class="auth-plate-status" id="sched-plate-status"></div>
             </div>
             <div class="auth-field">
               <label for="sched-vehicle">Marca / Modelo</label>
@@ -663,11 +749,8 @@
     const card = overlay.querySelector('.auth-card');
     const tabs = overlay.querySelectorAll('.auth-tab');
     const loginForm = overlay.querySelector('#auth-form-login');
-    const registerForm = overlay.querySelector('#auth-form-register');
     const scheduleForm = overlay.querySelector('#auth-form-schedule');
     const loginError = overlay.querySelector('#auth-login-error');
-    const regError = overlay.querySelector('#auth-reg-error');
-    const regSuccess = overlay.querySelector('#auth-reg-success');
     const schedError = overlay.querySelector('#auth-sched-error');
     const schedSuccess = overlay.querySelector('#auth-sched-success');
     const slotsContainer = overlay.querySelector('#sched-slots');
@@ -714,13 +797,30 @@
       renderSlotsForDate(dateInput.value);
     });
 
+    // Indicador da placa: verifica se está cadastrada conforme o usuário digita
+    const plateInput = overlay.querySelector('#sched-plate');
+    const plateStatus = overlay.querySelector('#sched-plate-status');
+    function updatePlateStatus() {
+      const v = (plateInput.value || '').trim().toUpperCase();
+      plateStatus.classList.remove('show', 'found', 'missing');
+      if (!v) return;
+      if (isPlateRegistered(v)) {
+        plateStatus.textContent = '✓ Veículo cadastrado.';
+        plateStatus.classList.add('show', 'found');
+      } else {
+        plateStatus.textContent = '⚠ Placa não cadastrada — será cadastrada junto com o agendamento.';
+        plateStatus.classList.add('show', 'missing');
+      }
+    }
+    plateInput.addEventListener('input', updatePlateStatus);
+    plateInput.addEventListener('blur', updatePlateStatus);
+
     tabs.forEach((t) =>
       t.addEventListener('click', () => {
         tabs.forEach((x) => x.classList.remove('active'));
         t.classList.add('active');
         const which = t.getAttribute('data-tab');
         loginForm.style.display = which === 'login' ? '' : 'none';
-        registerForm.style.display = which === 'register' ? '' : 'none';
         scheduleForm.style.display = which === 'schedule' ? '' : 'none';
         if (which === 'schedule') {
           card.classList.add('wide');
@@ -729,8 +829,6 @@
           card.classList.remove('wide');
         }
         loginError.classList.remove('show');
-        regError.classList.remove('show');
-        regSuccess.classList.remove('show');
         schedError.classList.remove('show');
         schedSuccess.classList.remove('show');
       })
@@ -755,38 +853,8 @@
       }
     });
 
-    registerForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      regError.classList.remove('show');
-      regSuccess.classList.remove('show');
-      const name = overlay.querySelector('#auth-reg-name').value;
-      const email = overlay.querySelector('#auth-reg-email').value;
-      const password = overlay.querySelector('#auth-reg-password').value;
-      const btn = registerForm.querySelector('button[type=submit]');
-      btn.disabled = true;
-      try {
-        const u = await register({ name, email, password });
-        regSuccess.textContent =
-          u.role === 'superadmin'
-            ? 'Cadastro realizado como Super Admin! Faça login.'
-            : 'Cadastro realizado! Faça login para continuar.';
-        regSuccess.classList.add('show');
-        registerForm.reset();
-        // Alterna para a aba de login automaticamente
-        setTimeout(() => {
-          tabs.forEach((x) => x.classList.remove('active'));
-          tabs[0].classList.add('active');
-          loginForm.style.display = '';
-          registerForm.style.display = 'none';
-          overlay.querySelector('#auth-login-email').value = u.email;
-        }, 900);
-      } catch (err) {
-        regError.textContent = err.message || 'Erro ao cadastrar.';
-        regError.classList.add('show');
-      } finally {
-        btn.disabled = false;
-      }
-    });
+    // Cadastro publico desativado: apenas o super admin cria usuarios via
+    // o painel de Administracao (botao "Criar usuario").
 
     scheduleForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -825,6 +893,22 @@
         return;
       }
 
+      // Se a placa nao estiver cadastrada, registra cliente + veiculo junto
+      let cadastradoAgora = false;
+      if (!isPlateRegistered(plate)) {
+        const ok = window.confirm(
+          'A placa ' + plate + ' não está cadastrada.\n\n' +
+          'Deseja prosseguir e cadastrá-la junto com o agendamento?'
+        );
+        if (!ok) {
+          schedError.textContent = 'Agendamento cancelado: cadastre a placa antes de continuar.';
+          schedError.classList.add('show');
+          return;
+        }
+        registerVehicleFromSchedule({ name, phone, plate, vehicle });
+        cadastradoAgora = true;
+      }
+
       const appointment = { name, phone, plate, vehicle, description, date, time, ts: Date.now() };
       list.push(appointment);
       saveAppointments(list);
@@ -833,7 +917,9 @@
       const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
       window.open(url, '_blank', 'noopener');
 
-      schedSuccess.textContent = 'Agendamento registrado! Confirme o envio no WhatsApp.';
+      schedSuccess.textContent = cadastradoAgora
+        ? 'Veículo cadastrado e agendamento registrado! Confirme o envio no WhatsApp.'
+        : 'Agendamento registrado! Confirme o envio no WhatsApp.';
       schedSuccess.classList.add('show');
       scheduleForm.reset();
       dateInput.value = todayStr;
@@ -942,6 +1028,26 @@
           <button type="button" class="admin-close" aria-label="Fechar" id="admin-close-btn">×</button>
         </div>
         <div class="admin-body">
+          <form class="admin-newuser" id="admin-newuser-form" autocomplete="off">
+            <h3>Criar usuário</h3>
+            <div class="admin-newuser-grid">
+              <div>
+                <label for="admin-new-name">Nome completo</label>
+                <input type="text" id="admin-new-name" required />
+              </div>
+              <div>
+                <label for="admin-new-email">E-mail</label>
+                <input type="email" id="admin-new-email" required />
+              </div>
+              <div>
+                <label for="admin-new-password">Senha (mín. 6)</label>
+                <input type="password" id="admin-new-password" minlength="6" required />
+              </div>
+              <button type="submit" class="admin-btn primary">Criar</button>
+            </div>
+            <div class="admin-newuser-msg" id="admin-newuser-msg"></div>
+          </form>
+
           ${users.length === 0
             ? '<p style="color:#5f6368;font-size:13px;margin:8px 0;">Nenhum usuário cadastrado ainda.</p>'
             : `<table class="admin-table">
@@ -967,6 +1073,36 @@
     overlay.querySelector('#admin-close-btn').addEventListener('click', close);
     overlay.querySelector('#admin-cancel-btn').addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    // Criar usuário
+    const newUserForm = overlay.querySelector('#admin-newuser-form');
+    const newUserMsg = overlay.querySelector('#admin-newuser-msg');
+    newUserForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      newUserMsg.classList.remove('show', 'error', 'ok');
+      const name = overlay.querySelector('#admin-new-name').value;
+      const email = overlay.querySelector('#admin-new-email').value;
+      const password = overlay.querySelector('#admin-new-password').value;
+      const btn = newUserForm.querySelector('button[type=submit]');
+      btn.disabled = true;
+      try {
+        const u = await register({ name, email, password });
+        newUserMsg.textContent = u.role === 'superadmin'
+          ? 'Usuário criado como Super Admin.'
+          : 'Usuário criado. Marque os menus liberados abaixo e clique em Salvar.';
+        newUserMsg.classList.add('show', 'ok');
+        // Recarrega o painel para refletir o novo usuário
+        setTimeout(() => {
+          overlay.remove();
+          openAdminModal();
+        }, 700);
+      } catch (err) {
+        newUserMsg.textContent = err.message || 'Erro ao criar usuário.';
+        newUserMsg.classList.add('show', 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     overlay.querySelector('#admin-save-btn').addEventListener('click', () => {
       const checks = overlay.querySelectorAll('input[type=checkbox][data-email]');
@@ -1022,6 +1158,8 @@
     getAppointments,
     generateTimeSlots,
     isSlotBooked,
+    isPlateRegistered,
+    getRegisteredPlates,
     MENUS,
     SUPER_ADMIN_EMAIL,
     SUPER_ADMIN_EMAILS,
