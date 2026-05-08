@@ -700,7 +700,7 @@
             </div>
             <div class="auth-banner-info">
               <p>Mecânico · Injeção · Diesel · Flex · Multimarcas</p>
-              <p class="auth-banner-phone">📞 (11) 99508-6683 — Edimar</p>
+              <p class="auth-banner-phone">📞 (11) 99508-6683 Edimar</p>
             </div>
           </div>
           <div class="auth-banner-strip" aria-label="Marcas atendidas">
