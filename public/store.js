@@ -39,7 +39,42 @@
 
   function schedulePersist(id) {
     if (writeTimers.has(id)) clearTimeout(writeTimers.get(id));
-    writeTimers.set(id, setTimeout(() => persistTbody(id), 80));
+    writeTimers.set(id, setTimeout(() => {
+      persistTbody(id);
+      recomputeTotals(id);
+    }, 80));
+  }
+
+  // Mapa: tbody → { totalEl, valueColumnIndex }
+  const TOTALS = {
+    'receivables-table-body': { totalId: 'receivables-total', col: 6 },
+    'paid-table-body':        { totalId: 'paid-total',        col: 6 },
+  };
+
+  function parseBRL(str) {
+    if (!str) return 0;
+    // "R$ 1.234,56" → 1234.56
+    const m = String(str).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(m);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function recomputeTotals(changedId) {
+    Object.keys(TOTALS).forEach((id) => {
+      if (changedId && id !== changedId) return;
+      const cfg = TOTALS[id];
+      const tbody = document.getElementById(id);
+      const totalEl = document.getElementById(cfg.totalId);
+      if (!tbody || !totalEl) return;
+      let sum = 0;
+      tbody.querySelectorAll('tr').forEach((tr) => {
+        const cell = tr.children[cfg.col];
+        if (cell) sum += parseBRL(cell.textContent);
+      });
+      totalEl.textContent = 'R$ ' + sum.toFixed(2)
+        .replace('.', ',')
+        .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    });
   }
 
   function watchAll() {
@@ -254,6 +289,7 @@
     attachProductForm();
     attachChecklistForm();
     patchChecklistTitle();
+    recomputeTotals();
   }
 
   if (document.readyState === 'loading') {
