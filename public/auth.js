@@ -6,6 +6,15 @@
   const STORAGE_SESSION = 'dihmec_session';
   const STORAGE_PERMISSIONS = 'dihmec_permissions';
 
+  // Permissões padrão para usuários comuns recém-cadastrados.
+  const DEFAULT_USER_PERMISSIONS = ['cadastro-cliente', 'checklist', 'nova-os'];
+
+  // Agendamento de serviço
+  const STORAGE_APPOINTMENTS = 'dihmec_appointments';
+  const WHATSAPP_NUMBER = '5511995086683';
+  const BUSINESS_HOURS = { startHour: 8, endHour: 17 }; // 08:00 às 17:00
+  const SLOT_MINUTES = 30;
+
   // Lista de menus do sistema. `always: true` significa que todo usuário
   // logado tem acesso (não é possível remover esta permissão).
   const MENUS = [
@@ -62,7 +71,7 @@
     email = (email || '').toLowerCase();
     const perms = getPermissions();
     if (Array.isArray(perms[email])) return perms[email];
-    return ['cadastro-cliente'];
+    return DEFAULT_USER_PERMISSIONS.slice();
   }
   function setUserPermissions(email, list) {
     email = (email || '').toLowerCase();
@@ -80,6 +89,47 @@
     if (def && def.always) return true;
     return getUserPermissions(session.email).includes(menuId);
   }
+  // ---------- Agendamentos ----------
+  function getAppointments() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_APPOINTMENTS) || '[]'); }
+    catch (e) { return []; }
+  }
+  function saveAppointments(list) {
+    localStorage.setItem(STORAGE_APPOINTMENTS, JSON.stringify(list));
+  }
+  function generateTimeSlots() {
+    const slots = [];
+    for (let h = BUSINESS_HOURS.startHour; h < BUSINESS_HOURS.endHour; h++) {
+      for (let m = 0; m < 60; m += SLOT_MINUTES) {
+        slots.push(
+          String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0')
+        );
+      }
+    }
+    return slots;
+  }
+  function isSlotBooked(date, time) {
+    return getAppointments().some((a) => a.date === date && a.time === time);
+  }
+  function buildWhatsAppMessage(a) {
+    const [y, m, d] = a.date.split('-');
+    const dataBR = `${d}/${m}/${y}`;
+    return [
+      'Olá! Gostaria de agendar um serviço na DIHMEC:',
+      '',
+      `📅 Data: ${dataBR}`,
+      `🕐 Horário: ${a.time}`,
+      '',
+      `👤 Cliente: ${a.name}`,
+      `📞 Telefone: ${a.phone}`,
+      '',
+      `🚗 Veículo: ${a.vehicle}`,
+      `🪪 Placa: ${a.plate}`,
+      '',
+      `📝 Serviço: ${a.description}`,
+    ].join('\n');
+  }
+
   function listUsers() {
     const users = getUsers();
     const perms = getPermissions();
@@ -89,7 +139,7 @@
       role: u.role,
       permissions: u.role === 'superadmin'
         ? MENUS.map((m) => m.id)
-        : (Array.isArray(perms[u.email]) ? perms[u.email] : ['cadastro-cliente']),
+        : (Array.isArray(perms[u.email]) ? perms[u.email] : DEFAULT_USER_PERMISSIONS.slice()),
     }));
   }
 
@@ -106,11 +156,11 @@
     const user = { name, email, passwordHash, role, createdAt: Date.now() };
     users.push(user);
     saveUsers(users);
-    // Permissões padrão: usuário comum só pode acessar Cadastro de Cliente.
+    // Permissões padrão para usuários comuns: Cadastro de Cliente, Checklist e Nova OS.
     if (role !== 'superadmin') {
       const perms = getPermissions();
       if (!perms[email]) {
-        perms[email] = ['cadastro-cliente'];
+        perms[email] = DEFAULT_USER_PERMISSIONS.slice();
         savePermissions(perms);
       }
     }
@@ -158,11 +208,13 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     .auth-card {
-      width: 100%; max-width: 420px;
+      width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto;
       background: #fff; border-radius: 16px;
       box-shadow: 0 24px 64px rgba(0,0,0,0.25);
       padding: 28px 28px 24px; color: #1a1d24;
+      transition: max-width .25s ease;
     }
+    .auth-card.wide { max-width: 560px; }
     .auth-card h2 {
       margin: 0 0 4px; font-size: 22px; font-weight: 700;
       color: #1a1d24;
@@ -240,6 +292,58 @@
       font-family: inherit;
     }
     .auth-userbar button:hover { text-decoration: underline; }
+
+    /* Agendamento */
+    .auth-field textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #e8eaed;
+      border-radius: 8px; font-size: 14px; font-family: inherit;
+      background: #fff; color: #1a1d24; outline: none; resize: vertical;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .auth-field textarea:focus {
+      border-color: #e85d04;
+      box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.12);
+    }
+    .sched-grid {
+      display: grid; gap: 12px; grid-template-columns: 1fr 1fr;
+    }
+    .sched-grid .auth-field { margin-bottom: 0; }
+    .sched-slots {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+      margin-top: 4px;
+    }
+    .sched-slot {
+      padding: 8px 4px; border: 1px solid #e8eaed; border-radius: 6px;
+      background: #fff; cursor: pointer; font-size: 12px; font-weight: 500;
+      font-family: inherit; text-align: center; color: #1a1d24;
+      transition: all .15s ease;
+    }
+    .sched-slot:hover:not(.booked):not(:disabled) {
+      border-color: #e85d04; background: #fff7f0;
+    }
+    .sched-slot.selected {
+      background: #e85d04; color: #fff; border-color: #e85d04;
+      box-shadow: 0 2px 6px rgba(232, 93, 4, 0.3);
+    }
+    .sched-slot.booked, .sched-slot:disabled {
+      background: #f0f2f5; color: #b0b3b8; cursor: not-allowed;
+      text-decoration: line-through;
+    }
+    .sched-empty {
+      grid-column: 1 / -1; color: #5f6368; font-size: 12px;
+      text-align: center; padding: 12px;
+    }
+    .sched-legend {
+      display: flex; gap: 12px; font-size: 11px; color: #5f6368;
+      margin-top: 8px; justify-content: center; flex-wrap: wrap;
+    }
+    .sched-legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .sched-legend .dot {
+      width: 10px; height: 10px; border-radius: 3px; display: inline-block;
+    }
+    .sched-legend .dot.free { background: #fff; border: 1px solid #e8eaed; }
+    .sched-legend .dot.sel { background: #e85d04; }
+    .sched-legend .dot.busy { background: #f0f2f5; }
 
     /* Modal de Administração */
     .admin-overlay {
@@ -364,6 +468,7 @@
         <div class="auth-tabs" role="tablist">
           <button type="button" class="auth-tab active" data-tab="login" role="tab">Entrar</button>
           <button type="button" class="auth-tab" data-tab="register" role="tab">Cadastrar</button>
+          <button type="button" class="auth-tab" data-tab="schedule" role="tab">Agendar</button>
         </div>
 
         <form id="auth-form-login" novalidate>
@@ -397,17 +502,108 @@
           <div class="auth-success" id="auth-reg-success"></div>
         </form>
 
+        <form id="auth-form-schedule" novalidate style="display:none">
+          <p class="auth-sub" style="margin-top:-10px;margin-bottom:14px">
+            Funcionamento: 08:00 às 17:00. O agendamento será enviado pelo WhatsApp para confirmação.
+          </p>
+          <div class="auth-field">
+            <label for="sched-date">Data do agendamento</label>
+            <input type="date" id="sched-date" required />
+          </div>
+          <div class="auth-field">
+            <label>Horários disponíveis</label>
+            <div class="sched-slots" id="sched-slots"></div>
+            <div class="sched-legend">
+              <span><span class="dot free"></span>Livre</span>
+              <span><span class="dot sel"></span>Selecionado</span>
+              <span><span class="dot busy"></span>Ocupado</span>
+            </div>
+          </div>
+          <div class="sched-grid">
+            <div class="auth-field">
+              <label for="sched-name">Seu nome</label>
+              <input type="text" id="sched-name" required />
+            </div>
+            <div class="auth-field">
+              <label for="sched-phone">Telefone (WhatsApp)</label>
+              <input type="tel" id="sched-phone" placeholder="(11) 99999-0000" required />
+            </div>
+            <div class="auth-field">
+              <label for="sched-plate">Placa</label>
+              <input type="text" id="sched-plate" placeholder="ABC1D23" maxlength="7" required />
+            </div>
+            <div class="auth-field">
+              <label for="sched-vehicle">Marca / Modelo</label>
+              <input type="text" id="sched-vehicle" placeholder="Honda Civic" required />
+            </div>
+          </div>
+          <div class="auth-field" style="margin-top:12px">
+            <label for="sched-desc">Descrição do serviço</label>
+            <textarea id="sched-desc" rows="2" placeholder="Ex.: Troca de óleo e revisão" required></textarea>
+          </div>
+          <button type="submit" class="auth-submit">Enviar pelo WhatsApp</button>
+          <div class="auth-error" id="auth-sched-error"></div>
+          <div class="auth-success" id="auth-sched-success"></div>
+        </form>
+
         <p class="auth-hint">Os dados ficam armazenados localmente no seu navegador.</p>
       </div>
     `;
     document.body.appendChild(overlay);
 
+    const card = overlay.querySelector('.auth-card');
     const tabs = overlay.querySelectorAll('.auth-tab');
     const loginForm = overlay.querySelector('#auth-form-login');
     const registerForm = overlay.querySelector('#auth-form-register');
+    const scheduleForm = overlay.querySelector('#auth-form-schedule');
     const loginError = overlay.querySelector('#auth-login-error');
     const regError = overlay.querySelector('#auth-reg-error');
     const regSuccess = overlay.querySelector('#auth-reg-success');
+    const schedError = overlay.querySelector('#auth-sched-error');
+    const schedSuccess = overlay.querySelector('#auth-sched-success');
+    const slotsContainer = overlay.querySelector('#sched-slots');
+    const dateInput = overlay.querySelector('#sched-date');
+
+    // Define data mínima como hoje
+    const today = new Date();
+    const todayStr =
+      today.getFullYear() + '-' +
+      String(today.getMonth() + 1).padStart(2, '0') + '-' +
+      String(today.getDate()).padStart(2, '0');
+    dateInput.min = todayStr;
+    dateInput.value = todayStr;
+
+    function renderSlotsForDate(date) {
+      const slots = generateTimeSlots();
+      const selected = slotsContainer.dataset.selected || '';
+      slotsContainer.innerHTML = '';
+      if (!date) {
+        slotsContainer.innerHTML = '<p class="sched-empty">Selecione uma data primeiro.</p>';
+        return;
+      }
+      slots.forEach((time) => {
+        const booked = isSlotBooked(date, time);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sched-slot' +
+          (booked ? ' booked' : '') +
+          (time === selected ? ' selected' : '');
+        btn.textContent = time;
+        btn.disabled = booked;
+        btn.dataset.time = time;
+        btn.addEventListener('click', () => {
+          slotsContainer.querySelectorAll('.sched-slot').forEach((s) => s.classList.remove('selected'));
+          btn.classList.add('selected');
+          slotsContainer.dataset.selected = time;
+        });
+        slotsContainer.appendChild(btn);
+      });
+    }
+
+    dateInput.addEventListener('change', () => {
+      slotsContainer.dataset.selected = '';
+      renderSlotsForDate(dateInput.value);
+    });
 
     tabs.forEach((t) =>
       t.addEventListener('click', () => {
@@ -416,9 +612,18 @@
         const which = t.getAttribute('data-tab');
         loginForm.style.display = which === 'login' ? '' : 'none';
         registerForm.style.display = which === 'register' ? '' : 'none';
+        scheduleForm.style.display = which === 'schedule' ? '' : 'none';
+        if (which === 'schedule') {
+          card.classList.add('wide');
+          renderSlotsForDate(dateInput.value);
+        } else {
+          card.classList.remove('wide');
+        }
         loginError.classList.remove('show');
         regError.classList.remove('show');
         regSuccess.classList.remove('show');
+        schedError.classList.remove('show');
+        schedSuccess.classList.remove('show');
       })
     );
 
@@ -472,6 +677,59 @@
       } finally {
         btn.disabled = false;
       }
+    });
+
+    scheduleForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      schedError.classList.remove('show');
+      schedSuccess.classList.remove('show');
+      const date = dateInput.value;
+      const time = slotsContainer.dataset.selected || '';
+      const name = overlay.querySelector('#sched-name').value.trim();
+      const phone = overlay.querySelector('#sched-phone').value.trim();
+      const plate = overlay.querySelector('#sched-plate').value.trim().toUpperCase();
+      const vehicle = overlay.querySelector('#sched-vehicle').value.trim();
+      const description = overlay.querySelector('#sched-desc').value.trim();
+
+      if (!date) {
+        schedError.textContent = 'Selecione uma data.';
+        schedError.classList.add('show');
+        return;
+      }
+      if (!time) {
+        schedError.textContent = 'Escolha um horário disponível.';
+        schedError.classList.add('show');
+        return;
+      }
+      if (!name || !phone || !plate || !vehicle || !description) {
+        schedError.textContent = 'Preencha todos os campos.';
+        schedError.classList.add('show');
+        return;
+      }
+
+      const list = getAppointments();
+      if (list.some((a) => a.date === date && a.time === time)) {
+        schedError.textContent = 'Este horário acabou de ser ocupado. Escolha outro.';
+        schedError.classList.add('show');
+        slotsContainer.dataset.selected = '';
+        renderSlotsForDate(date);
+        return;
+      }
+
+      const appointment = { name, phone, plate, vehicle, description, date, time, ts: Date.now() };
+      list.push(appointment);
+      saveAppointments(list);
+
+      const message = buildWhatsAppMessage(appointment);
+      const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
+      window.open(url, '_blank', 'noopener');
+
+      schedSuccess.textContent = 'Agendamento registrado! Confirme o envio no WhatsApp.';
+      schedSuccess.classList.add('show');
+      scheduleForm.reset();
+      dateInput.value = todayStr;
+      slotsContainer.dataset.selected = '';
+      renderSlotsForDate(todayStr);
     });
   }
 
@@ -652,8 +910,13 @@
     setUserPermissions,
     openAdminModal,
     applyMenuPermissions,
+    getAppointments,
+    generateTimeSlots,
+    isSlotBooked,
     MENUS,
     SUPER_ADMIN_EMAIL,
+    WHATSAPP_NUMBER,
+    BUSINESS_HOURS,
   };
 
   // Auto-executa proteção quando o script é carregado com o atributo
