@@ -523,36 +523,48 @@
     .admin-body {
       padding: 16px 22px; overflow: auto; flex: 1;
     }
-    .admin-table {
-      width: 100%; border-collapse: collapse; font-size: 12px;
+    /* Lista horizontal de permissões por usuário */
+    .admin-user-block {
+      border: 1px solid #e8eaed; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 10px; background: #fff;
     }
-    .admin-table th, .admin-table td {
-      padding: 8px 6px; text-align: left; border-bottom: 1px solid #f0f2f5;
-      vertical-align: middle; white-space: nowrap;
+    .admin-user-header {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 10px; padding-bottom: 8px;
+      border-bottom: 1px solid #f0f2f5;
     }
-    .admin-table th {
-      position: sticky; top: 0; background: #fafafa; color: #5f6368;
-      font-weight: 600; font-size: 11px; text-transform: uppercase;
-      letter-spacing: .3px;
+    .admin-user-header strong { font-size: 14px; color: #1a1d24; }
+    .admin-user-header small { color: #80868b; font-size: 12px; margin-left: auto; }
+    .admin-perms-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
     }
-    .admin-table th.menu-th {
-      writing-mode: vertical-rl; transform: rotate(180deg);
-      text-align: left; height: 130px; padding: 8px 4px;
-      letter-spacing: .2px;
+    .admin-perm-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border: 1px solid #e8eaed;
+      border-radius: 999px; background: #fafafa;
+      font-size: 12px; color: #5f6368; cursor: pointer;
+      user-select: none;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
     }
-    .admin-table tbody tr:hover { background: #fafafa; }
-    .admin-user-cell { min-width: 200px; white-space: normal; }
-    .admin-user-cell strong { display: block; }
-    .admin-user-cell small { color: #80868b; }
+    .admin-perm-chip:hover { border-color: #c41e1e; background: #fff5f5; }
+    .admin-perm-chip input[type=checkbox] {
+      margin: 0; accent-color: #c41e1e; cursor: pointer;
+    }
+    .admin-perm-chip.checked {
+      background: #c41e1e; border-color: #c41e1e; color: #fff;
+    }
+    .admin-perm-chip.checked:hover { background: #a01818; }
+    .admin-perm-chip.disabled {
+      opacity: 0.55; cursor: not-allowed;
+    }
+    .admin-perm-chip.disabled input { cursor: not-allowed; }
     .admin-role-badge {
-      display: inline-block; margin-left: 6px;
+      display: inline-block;
       background: #5f6368; color: #fff; padding: 1px 6px;
       border-radius: 999px; font-size: 9px; font-weight: 700;
       text-transform: uppercase; letter-spacing: .3px;
     }
     .admin-role-badge.super { background: #c41e1e; }
-    .admin-table input[type=checkbox] { cursor: pointer; transform: scale(1.1); }
-    .admin-table input[type=checkbox]:disabled { cursor: not-allowed; opacity: 0.5; }
     .admin-footer {
       padding: 12px 22px; border-top: 1px solid #e8eaed;
       display: flex; justify-content: flex-end; gap: 8px; align-items: center;
@@ -991,30 +1003,40 @@
 
     const users = listUsers();
     const menusEditable = MENUS.filter((m) => !m.always);
-    const headerMenuCells = menusEditable
-      .map((m) => `<th class="menu-th">${escapeHtml(m.label)}</th>`)
-      .join('');
 
-    const rows = users.map((u) => {
+    const userBlocks = users.map((u) => {
       const isSuper = u.role === 'superadmin';
-      const userCellRole = isSuper
+      const roleBadge = isSuper
         ? '<span class="admin-role-badge super">Super Admin</span>'
         : '<span class="admin-role-badge">Usuário</span>';
-      const cells = menusEditable
+      const chips = menusEditable
         .map((m) => {
-          const checked = u.permissions.includes(m.id) ? 'checked' : '';
-          const disabled = isSuper ? 'disabled' : '';
-          return `<td style="text-align:center"><input type="checkbox" data-email="${escapeHtml(u.email)}" data-menu="${escapeHtml(m.id)}" ${checked} ${disabled} /></td>`;
+          const checked = u.permissions.includes(m.id);
+          const disabled = isSuper;
+          const cls = 'admin-perm-chip' +
+            (checked ? ' checked' : '') +
+            (disabled ? ' disabled' : '');
+          return `
+            <label class="${cls}">
+              <input type="checkbox"
+                     data-email="${escapeHtml(u.email)}"
+                     data-menu="${escapeHtml(m.id)}"
+                     ${checked ? 'checked' : ''}
+                     ${disabled ? 'disabled' : ''} />
+              <span>${escapeHtml(m.label)}</span>
+            </label>
+          `;
         })
         .join('');
       return `
-        <tr>
-          <td class="admin-user-cell">
-            <strong>${escapeHtml(u.name)}</strong> ${userCellRole}<br/>
+        <div class="admin-user-block">
+          <div class="admin-user-header">
+            <strong>${escapeHtml(u.name)}</strong>
+            ${roleBadge}
             <small>${escapeHtml(u.email)}</small>
-          </td>
-          ${cells}
-        </tr>
+          </div>
+          <div class="admin-perms-row">${chips}</div>
+        </div>
       `;
     }).join('');
 
@@ -1050,15 +1072,7 @@
 
           ${users.length === 0
             ? '<p style="color:#5f6368;font-size:13px;margin:8px 0;">Nenhum usuário cadastrado ainda.</p>'
-            : `<table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Usuário</th>
-                    ${headerMenuCells}
-                  </tr>
-                </thead>
-                <tbody>${rows}</tbody>
-              </table>`}
+            : userBlocks}
         </div>
         <div class="admin-footer">
           <span class="admin-status" id="admin-status">Permissões salvas.</span>
@@ -1073,6 +1087,14 @@
     overlay.querySelector('#admin-close-btn').addEventListener('click', close);
     overlay.querySelector('#admin-cancel-btn').addEventListener('click', close);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+
+    // Sincroniza visual do chip com o estado do checkbox
+    overlay.addEventListener('change', (e) => {
+      const cb = e.target;
+      if (!cb.matches('.admin-perm-chip input[type=checkbox]')) return;
+      const chip = cb.closest('.admin-perm-chip');
+      if (chip) chip.classList.toggle('checked', cb.checked);
+    });
 
     // Criar usuário
     const newUserForm = overlay.querySelector('#admin-newuser-form');
