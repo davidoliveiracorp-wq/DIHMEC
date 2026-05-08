@@ -222,6 +222,70 @@
     .auth-card p.auth-sub {
       margin: 0 0 20px; color: #5f6368; font-size: 13px;
     }
+
+    /* Banner DIHMEC dentro do modal */
+    .auth-banner {
+      position: relative;
+      margin: -28px -28px 20px;
+      padding: 16px 22px 10px;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(232,93,4,0.10), transparent 60%),
+        linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #161616 100%);
+      color: #f5f5f5;
+      overflow: hidden;
+    }
+    .auth-banner::after {
+      content: ''; position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 14px 14px; pointer-events: none;
+    }
+    .auth-banner-top {
+      display: flex; align-items: center; gap: 14px;
+      position: relative; z-index: 2;
+    }
+    .auth-banner-mark {
+      flex-shrink: 0; width: 60px; height: 60px;
+      border: 2px solid #888; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at 30% 30%, #3a3a3a 0%, #0d0d0d 70%);
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.05),
+                  0 4px 10px rgba(0,0,0,0.4);
+    }
+    .auth-banner-mark img { max-width: 78%; max-height: 78%; object-fit: contain; }
+    .auth-banner-mark span {
+      color: #fff; font-weight: 800; font-size: 12px; letter-spacing: 1.5px;
+    }
+    .auth-banner-info { flex: 1; min-width: 0; }
+    .auth-banner-info h3 {
+      margin: 0; color: #fff; font-size: 16px; font-weight: 800;
+      letter-spacing: 1.5px;
+    }
+    .auth-banner-info p {
+      margin: 2px 0 0; font-size: 10px; color: #b8b8b8;
+      font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase;
+    }
+    .auth-banner-info .auth-banner-phone {
+      color: #ff8a3d; font-size: 11px; font-weight: 700;
+      margin-top: 3px; letter-spacing: 0; text-transform: none;
+    }
+    .auth-banner-strip {
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 12px;
+      margin-top: 10px; padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      position: relative; z-index: 2;
+    }
+    .auth-banner-strip img {
+      height: 16px; width: auto;
+      filter: brightness(0) invert(0.78);
+      opacity: 0.55;
+      transition: opacity .15s ease, filter .15s ease;
+    }
+    .auth-banner-strip img:hover {
+      opacity: 1;
+      filter: brightness(0) invert(1);
+    }
     .auth-tabs {
       display: flex; background: #f0f2f5; border-radius: 10px;
       padding: 4px; margin-bottom: 18px;
@@ -463,7 +527,33 @@
     overlay.className = 'auth-overlay';
     overlay.innerHTML = `
       <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-        <h2 id="auth-title">Bem-vindo ao DIHMEC</h2>
+        <div class="auth-banner">
+          <div class="auth-banner-top">
+            <div class="auth-banner-mark">
+              <img src="/logo-dihmec.png" alt="DIHMEC"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
+              <span style="display:none">DIHMEC</span>
+            </div>
+            <div class="auth-banner-info">
+              <h3>DIHMEC</h3>
+              <p>Mecânico · Injeção · Diesel · Flex · Multimarcas</p>
+              <p class="auth-banner-phone">📞 (11) 99508-6683 — Edimar</p>
+            </div>
+          </div>
+          <div class="auth-banner-strip" aria-label="Marcas atendidas">
+            <img src="https://cdn.simpleicons.org/mercedes/silver" alt="Mercedes-Benz" title="Mercedes-Benz" />
+            <img src="https://cdn.simpleicons.org/volkswagen/silver" alt="Volkswagen" title="Volkswagen" />
+            <img src="https://cdn.simpleicons.org/ford/silver" alt="Ford" title="Ford" />
+            <img src="https://cdn.simpleicons.org/honda/silver" alt="Honda" title="Honda" />
+            <img src="https://cdn.simpleicons.org/toyota/silver" alt="Toyota" title="Toyota" />
+            <img src="https://cdn.simpleicons.org/bmw/silver" alt="BMW" title="BMW" />
+            <img src="https://cdn.simpleicons.org/hyundai/silver" alt="Hyundai" title="Hyundai" />
+            <img src="https://cdn.simpleicons.org/fiat/silver" alt="Fiat" title="Fiat" />
+            <img src="https://cdn.simpleicons.org/chevrolet/silver" alt="Chevrolet" title="Chevrolet" />
+            <img src="https://cdn.simpleicons.org/renault/silver" alt="Renault" title="Renault" />
+          </div>
+        </div>
+        <h2 id="auth-title">Bem-vindo</h2>
         <p class="auth-sub">Entre ou crie sua conta para continuar.</p>
         <div class="auth-tabs" role="tablist">
           <button type="button" class="auth-tab active" data-tab="login" role="tab">Entrar</button>
