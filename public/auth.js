@@ -311,7 +311,7 @@
       padding: 16px 22px 10px;
       border-radius: 16px 16px 0 0;
       background:
-        radial-gradient(ellipse at 20% 0%, rgba(232,93,4,0.10), transparent 60%),
+        radial-gradient(ellipse at 20% 0%, rgba(196, 30, 30,0.10), transparent 60%),
         linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #161616 100%);
       color: #f5f5f5;
       overflow: hidden;
@@ -347,7 +347,7 @@
       font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase;
     }
     .auth-banner-info .auth-banner-phone {
-      color: #ff8a3d; font-size: 11px; font-weight: 700;
+      color: #ff6b6b; font-size: 11px; font-weight: 700;
       margin-top: 3px; letter-spacing: 0; text-transform: none;
     }
     .auth-banner-strip {
@@ -395,8 +395,8 @@
     .auth-field textarea::placeholder { color: #5a5a62; }
     .auth-field input:focus,
     .auth-field textarea:focus {
-      border-color: #e85d04;
-      box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.18);
+      border-color: #c41e1e;
+      box-shadow: 0 0 0 3px rgba(196, 30, 30, 0.18);
     }
     .auth-field input[type=date] { color-scheme: dark; }
     .auth-plate-status {
@@ -409,11 +409,11 @@
     .auth-submit {
       width: 100%; margin-top: 8px;
       padding: 11px 14px; border: none; border-radius: 8px;
-      background: #e85d04; color: #fff; font-size: 14px; font-weight: 600;
+      background: #c41e1e; color: #fff; font-size: 14px; font-weight: 600;
       cursor: pointer; transition: background .2s ease;
       font-family: inherit;
     }
-    .auth-submit:hover { background: #d45103; }
+    .auth-submit:hover { background: #a01818; }
     .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
     .auth-error {
       display: none; margin: 8px 0 0;
@@ -441,7 +441,7 @@
       font-size: 12px; color: #1a1d24;
     }
     .auth-userbar .auth-badge {
-      background: #e85d04; color: #fff; padding: 2px 8px;
+      background: #c41e1e; color: #fff; padding: 2px 8px;
       border-radius: 999px; font-size: 10px; font-weight: 700;
       text-transform: uppercase; letter-spacing: .5px;
     }
@@ -469,11 +469,11 @@
       transition: all .15s ease;
     }
     .sched-slot:hover:not(.booked):not(:disabled) {
-      border-color: #e85d04; background: #2a1f17;
+      border-color: #c41e1e; background: #2a1f17;
     }
     .sched-slot.selected {
-      background: #e85d04; color: #fff; border-color: #e85d04;
-      box-shadow: 0 2px 6px rgba(232, 93, 4, 0.4);
+      background: #c41e1e; color: #fff; border-color: #c41e1e;
+      box-shadow: 0 2px 6px rgba(196, 30, 30, 0.4);
     }
     .sched-slot.booked, .sched-slot:disabled {
       background: #232328; color: #5a5a62; cursor: not-allowed;
@@ -492,7 +492,7 @@
       width: 10px; height: 10px; border-radius: 3px; display: inline-block;
     }
     .sched-legend .dot.free { background: #16161a; border: 1px solid #3a3a42; }
-    .sched-legend .dot.sel { background: #e85d04; }
+    .sched-legend .dot.sel { background: #c41e1e; }
     .sched-legend .dot.busy { background: #232328; }
 
     /* Modal de Administração */
@@ -550,7 +550,7 @@
       border-radius: 999px; font-size: 9px; font-weight: 700;
       text-transform: uppercase; letter-spacing: .3px;
     }
-    .admin-role-badge.super { background: #e85d04; }
+    .admin-role-badge.super { background: #c41e1e; }
     .admin-table input[type=checkbox] { cursor: pointer; transform: scale(1.1); }
     .admin-table input[type=checkbox]:disabled { cursor: not-allowed; opacity: 0.5; }
     .admin-footer {
@@ -567,8 +567,8 @@
       font-size: 13px; font-weight: 600; cursor: pointer;
       font-family: inherit;
     }
-    .admin-btn.primary { background: #e85d04; color: #fff; }
-    .admin-btn.primary:hover { background: #d45103; }
+    .admin-btn.primary { background: #c41e1e; color: #fff; }
+    .admin-btn.primary:hover { background: #a01818; }
     .admin-btn.secondary { background: #f0f2f5; color: #1a1d24; }
     .admin-btn.secondary:hover { background: #e8eaed; }
 
@@ -596,8 +596,8 @@
       outline: none; background: #fff;
     }
     .admin-newuser-grid input:focus {
-      border-color: #e85d04;
-      box-shadow: 0 0 0 3px rgba(232,93,4,0.10);
+      border-color: #c41e1e;
+      box-shadow: 0 0 0 3px rgba(196, 30, 30,0.10);
     }
     .admin-newuser-msg {
       margin-top: 8px; font-size: 12px; display: none;
@@ -653,7 +653,7 @@
         <div class="auth-banner">
           <div class="auth-banner-top">
             <div class="auth-banner-mark">
-              <img src="/logo-dihmec.png" alt="DIHMEC"
+              <img src="/logo-dihmec.svg" alt="DIHMEC"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
               <span style="display:none">DIHMEC</span>
             </div>

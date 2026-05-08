@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="DIHMEC">
+  <!-- Fundo octogonal preto com borda prateada -->
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="60%" stop-color="#0d0d0d"/>
+      <stop offset="100%" stop-color="#000"/>
+    </radialGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0f0f0"/>
+      <stop offset="50%" stop-color="#a8a8a8"/>
+      <stop offset="100%" stop-color="#5a5a5a"/>
+    </linearGradient>
+  </defs>
+
+  <polygon points="60,12 140,12 188,60 188,140 140,188 60,188 12,140 12,60"
+           fill="url(#bg)" stroke="#9a9a9a" stroke-width="3"/>
+  <polygon points="60,12 140,12 188,60 188,140 140,188 60,188 12,140 12,60"
+           fill="none" stroke="#000" stroke-width="1.4" opacity="0.4"
+           transform="translate(0 1)"/>
+
+  <!-- Chaves cruzadas (X) atrás -->
+  <g stroke="url(#metal)" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.85">
+    <line x1="38" y1="38" x2="162" y2="162"/>
+    <line x1="162" y1="38" x2="38" y2="162"/>
+  </g>
+  <!-- Cabeças das chaves (círculos abertos) -->
+  <g fill="none" stroke="url(#metal)" stroke-width="6" opacity="0.9">
+    <circle cx="36" cy="36" r="11"/>
+    <circle cx="164" cy="36" r="11"/>
+    <circle cx="36" cy="164" r="11"/>
+    <circle cx="164" cy="164" r="11"/>
+  </g>
+
+  <!-- Pistão central -->
+  <g transform="translate(100 100)" fill="url(#metal)" stroke="#222" stroke-width="0.6">
+    <!-- topo do pistão -->
+    <rect x="-22" y="-58" width="44" height="22" rx="2"/>
+    <!-- anéis -->
+    <rect x="-22" y="-50" width="44" height="2.5" fill="#222"/>
+    <rect x="-22" y="-44" width="44" height="2.5" fill="#222"/>
+    <!-- biela (rod) -->
+    <rect x="-7" y="-36" width="14" height="44"/>
+    <!-- moente (parte de baixo) -->
+    <ellipse cx="0" cy="14" rx="20" ry="9"/>
+  </g>
+
+  <!-- Faixa central com DIHMEC -->
+  <g>
+    <rect x="20" y="86" width="160" height="28" fill="#0a0a0a" stroke="url(#metal)" stroke-width="1.2"/>
+    <rect x="20" y="86" width="160" height="3" fill="url(#metal)" opacity="0.6"/>
+    <rect x="20" y="111" width="160" height="3" fill="url(#metal)" opacity="0.4"/>
+    <text x="100" y="108"
+          text-anchor="middle"
+          font-family="Impact, 'Arial Narrow', Arial, sans-serif"
+          font-size="22"
+          font-weight="900"
+          font-style="italic"
+          letter-spacing="3"
+          fill="#ffffff">DIHMEC</text>
+  </g>
+</svg>

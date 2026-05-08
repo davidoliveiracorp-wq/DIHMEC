@@ -45,7 +45,7 @@ const App = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            color: '#e85d04',
+            color: '#c41e1e',
             textDecoration: 'none',
             fontWeight: 600,
             fontSize: '0.9375rem',
@@ -79,11 +79,11 @@ const App = () => {
             width: 40,
             height: 40,
             borderRadius: 12,
-            background: 'linear-gradient(135deg, #e85d04 0%, #d45103 100%)',
+            background: 'linear-gradient(135deg, #c41e1e 0%, #a01818 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(232, 93, 4, 0.3)'
+            boxShadow: '0 4px 12px rgba(196, 30, 30, 0.3)'
           }}
         >
           <GitBranch size={22} color="#fff" strokeWidth={2.5} />
@@ -160,8 +160,8 @@ const App = () => {
             cy={150}
             rx={80}
             ry={50}
-            fill="#e85d04"
-            stroke="#d45103"
+            fill="#c41e1e"
+            stroke="#a01818"
             strokeWidth={2}
           />
           <text x={600} y={155} fill="#fff" fontSize={16} fontWeight="bold" textAnchor="middle">
@@ -206,7 +206,7 @@ const App = () => {
           <path
             d="M 100 450 Q 200 400, 300 450 T 500 450"
             fill="none"
-            stroke="#e85d04"
+            stroke="#c41e1e"
             strokeWidth={3}
             strokeLinecap="round"
           />
