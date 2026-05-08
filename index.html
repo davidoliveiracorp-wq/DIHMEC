@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>Cadastro de Clientes e Veículos</title>
     <script src="/auth.js"></script>
+    <script src="/store.js" defer></script>
     <style type="text/css" media="screen">
   :root {
     --bg-page: #f0f2f5;
@@ -1142,70 +1143,6 @@
                       </tr>
                     </thead>
                     <tbody id="customers-table-body">
-                      <tr>
-                        <td>Maria Souza</td>
-                        <td>maria.souza@email.com</td>
-                        <td>(11) 99999-1234</td>
-                        <td>ABC1D23</td>
-                        <td>Civic Touring</td>
-                        <td>Honda</td>
-                        <td>2022</td>
-                        <td>Prata</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editCustomer(1)">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer(1)">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>João Silva</td>
-                        <td>joao.silva@email.com</td>
-                        <td>(11) 98888-5678</td>
-                        <td>XYZ9A87</td>
-                        <td>Corolla XEi</td>
-                        <td>Toyota</td>
-                        <td>2021</td>
-                        <td>Branco</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editCustomer(2)">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer(2)">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Ana Costa</td>
-                        <td>ana.costa@email.com</td>
-                        <td>(11) 97777-9012</td>
-                        <td>DEF5G45</td>
-                        <td>Onix Plus</td>
-                        <td>Chevrolet</td>
-                        <td>2023</td>
-                        <td>Preto</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editCustomer(3)">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer(3)">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Pedro Santos</td>
-                        <td>pedro.santos@email.com</td>
-                        <td>(11) 96666-3456</td>
-                        <td>GHI7H89</td>
-                        <td>HB20 Vision</td>
-                        <td>Hyundai</td>
-                        <td>2020</td>
-                        <td>Vermelho</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editCustomer(4)">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteCustomer(4)">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -1258,66 +1195,6 @@
                       </tr>
                     </thead>
                     <tbody id="vehicles-table-body">
-                      <tr>
-                        <td>ABC1D23</td>
-                        <td>Civic Touring</td>
-                        <td>Honda</td>
-                        <td>2022</td>
-                        <td>Prata</td>
-                        <td>Maria Souza</td>
-                        <td>(11) 99999-1234</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editVehicle('ABC1D23')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteVehicle('ABC1D23')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>XYZ9A87</td>
-                        <td>Corolla XEi</td>
-                        <td>Toyota</td>
-                        <td>2021</td>
-                        <td>Branco</td>
-                        <td>João Silva</td>
-                        <td>(11) 98888-5678</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editVehicle('XYZ9A87')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteVehicle('XYZ9A87')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>DEF5G45</td>
-                        <td>Onix Plus</td>
-                        <td>Chevrolet</td>
-                        <td>2023</td>
-                        <td>Preto</td>
-                        <td>Ana Costa</td>
-                        <td>(11) 97777-9012</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editVehicle('DEF5G45')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteVehicle('DEF5G45')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>GHI7H89</td>
-                        <td>HB20 Vision</td>
-                        <td>Hyundai</td>
-                        <td>2020</td>
-                        <td>Vermelho</td>
-                        <td>Pedro Santos</td>
-                        <td>(11) 96666-3456</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editVehicle('GHI7H89')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteVehicle('GHI7H89')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -1325,6 +1202,38 @@
 
               <!-- Formulário: Produtos/Estoque -->
               <div class="form-container" id="form-produtos-estoque">
+                <!-- Cadastro de Produto -->
+                <form class="customer_form" id="product-form" autocomplete="off" style="margin-bottom: 24px;">
+                  <div class="form-section">
+                    <h2>Cadastrar Produto</h2>
+                    <div class="form-group">
+                      <label for="product-code">Código</label>
+                      <input type="text" id="product-code" name="productCode" placeholder="Ex.: OLEO-001" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="product-name">Nome do produto</label>
+                      <input type="text" id="product-name" name="productName" placeholder="Ex.: Óleo 5W30 Sintético" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="product-category">Categoria</label>
+                      <input type="text" id="product-category" name="productCategory" placeholder="Ex.: Lubrificantes" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="product-qty">Quantidade</label>
+                      <input type="number" id="product-qty" name="productQty" min="0" step="1" placeholder="Ex.: 25" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="product-unit">Unidade</label>
+                      <input type="text" id="product-unit" name="productUnit" placeholder="Ex.: Litro, Unidade, Kg" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="product-price">Preço Unit. (R$)</label>
+                      <input type="number" id="product-price" name="productPrice" min="0" step="0.01" placeholder="Ex.: 45.90" required />
+                    </div>
+                  </div>
+                  <button type="submit" class="customer_form_button">Salvar Produto</button>
+                </form>
+
                 <!-- Campo de Pesquisa -->
                 <div class="search-container">
                   <h3>Pesquisar Produtos</h3>
@@ -1368,326 +1277,6 @@
                       </tr>
                     </thead>
                     <tbody id="products-table-body">
-                      <tr>
-                        <td>OLEO-001</td>
-                        <td>Óleo Motor 5W30 Sintético 5L</td>
-                        <td>Lubrificantes</td>
-                        <td>24</td>
-                        <td>Un</td>
-                        <td>R$ 89,90</td>
-                        <td>R$ 2.157,60</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('OLEO-001')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('OLEO-001')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>FILT-002</td>
-                        <td>Filtro de Óleo Universal</td>
-                        <td>Filtros</td>
-                        <td>45</td>
-                        <td>Un</td>
-                        <td>R$ 18,50</td>
-                        <td>R$ 832,50</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('FILT-002')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('FILT-002')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>PAST-003</td>
-                        <td>Pastilha de Freio Dianteira</td>
-                        <td>Freios</td>
-                        <td>32</td>
-                        <td>Un</td>
-                        <td>R$ 125,00</td>
-                        <td>R$ 4.000,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('PAST-003')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('PAST-003')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>DISK-004</td>
-                        <td>Disco de Freio Dianteiro</td>
-                        <td>Freios</td>
-                        <td>18</td>
-                        <td>Un</td>
-                        <td>R$ 185,00</td>
-                        <td>R$ 3.330,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('DISK-004')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('DISK-004')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>BAT-005</td>
-                        <td>Bateria 60Ah 12V</td>
-                        <td>Elétrica</td>
-                        <td>12</td>
-                        <td>Un</td>
-                        <td>R$ 320,00</td>
-                        <td>R$ 3.840,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('BAT-005')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('BAT-005')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>PNEU-006</td>
-                        <td>Pneu 185/65 R15</td>
-                        <td>Pneus</td>
-                        <td>28</td>
-                        <td>Un</td>
-                        <td>R$ 350,00</td>
-                        <td>R$ 9.800,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('PNEU-006')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('PNEU-006')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>AMOR-007</td>
-                        <td>Amortecedor Dianteiro</td>
-                        <td>Suspensão</td>
-                        <td>15</td>
-                        <td>Un</td>
-                        <td>R$ 280,00</td>
-                        <td>R$ 4.200,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('AMOR-007')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('AMOR-007')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>CORR-008</td>
-                        <td>Correia Dentada</td>
-                        <td>Motor</td>
-                        <td>22</td>
-                        <td>Un</td>
-                        <td>R$ 95,00</td>
-                        <td>R$ 2.090,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('CORR-008')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('CORR-008')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>RADI-009</td>
-                        <td>Radiador Universal</td>
-                        <td>Arrefecimento</td>
-                        <td>8</td>
-                        <td>Un</td>
-                        <td>R$ 450,00</td>
-                        <td>R$ 3.600,00</td>
-                        <td><span style="color: #F39C12; font-weight: bold;">Estoque Baixo</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('RADI-009')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('RADI-009')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>BOMB-010</td>
-                        <td>Bomba de Combustível</td>
-                        <td>Combustível</td>
-                        <td>14</td>
-                        <td>Un</td>
-                        <td>R$ 380,00</td>
-                        <td>R$ 5.320,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('BOMB-010')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('BOMB-010')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>VELA-011</td>
-                        <td>Vela de Ignição</td>
-                        <td>Motor</td>
-                        <td>60</td>
-                        <td>Un</td>
-                        <td>R$ 25,00</td>
-                        <td>R$ 1.500,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('VELA-011')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('VELA-011')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>FLUID-012</td>
-                        <td>Fluido de Freio DOT 4</td>
-                        <td>Freios</td>
-                        <td>35</td>
-                        <td>Un</td>
-                        <td>R$ 32,00</td>
-                        <td>R$ 1.120,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('FLUID-012')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('FLUID-012')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>EMBR-013</td>
-                        <td>Embreagem Completa</td>
-                        <td>Transmissão</td>
-                        <td>10</td>
-                        <td>Un</td>
-                        <td>R$ 520,00</td>
-                        <td>R$ 5.200,00</td>
-                        <td><span style="color: #F39C12; font-weight: bold;">Estoque Baixo</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('EMBR-013')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('EMBR-013')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>FARO-014</td>
-                        <td>Farol Dianteiro Completo</td>
-                        <td>Iluminação</td>
-                        <td>16</td>
-                        <td>Un</td>
-                        <td>R$ 195,00</td>
-                        <td>R$ 3.120,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('FARO-014')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('FARO-014')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>LIMP-015</td>
-                        <td>Limpador de Parabrisa</td>
-                        <td>Elétrica</td>
-                        <td>42</td>
-                        <td>Un</td>
-                        <td>R$ 45,00</td>
-                        <td>R$ 1.890,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('LIMP-015')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('LIMP-015')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>ANTI-016</td>
-                        <td>Anticongelante 5L</td>
-                        <td>Arrefecimento</td>
-                        <td>20</td>
-                        <td>Un</td>
-                        <td>R$ 48,00</td>
-                        <td>R$ 960,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('ANTI-016')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('ANTI-016')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>FILT-017</td>
-                        <td>Filtro de Ar</td>
-                        <td>Filtros</td>
-                        <td>38</td>
-                        <td>Un</td>
-                        <td>R$ 42,00</td>
-                        <td>R$ 1.596,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('FILT-017')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('FILT-017')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>FILT-018</td>
-                        <td>Filtro de Combustível</td>
-                        <td>Filtros</td>
-                        <td>30</td>
-                        <td>Un</td>
-                        <td>R$ 38,00</td>
-                        <td>R$ 1.140,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('FILT-018')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('FILT-018')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OLEO-019</td>
-                        <td>Óleo de Câmbio 75W90 1L</td>
-                        <td>Lubrificantes</td>
-                        <td>25</td>
-                        <td>Un</td>
-                        <td>R$ 65,00</td>
-                        <td>R$ 1.625,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Em Estoque</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('OLEO-019')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('OLEO-019')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>TERM-020</td>
-                        <td>Termostato</td>
-                        <td>Arrefecimento</td>
-                        <td>5</td>
-                        <td>Un</td>
-                        <td>R$ 55,00</td>
-                        <td>R$ 275,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Estoque Crítico</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="editProduct('TERM-020')">Editar</button>
-                            <button class="btn-action btn-delete" onclick="deleteProduct('TERM-020')">Excluir</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -1738,166 +1327,6 @@
                       </tr>
                     </thead>
                     <tbody id="receivables-table-body">
-                      <tr>
-                        <td>OS-2024-001</td>
-                        <td>15/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de óleo e filtros</td>
-                        <td>R$ 185,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-001')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-001')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-002</td>
-                        <td>18/01/2024</td>
-                        <td>João Silva</td>
-                        <td>Toyota Corolla XEi</td>
-                        <td>XYZ9A87</td>
-                        <td>Troca de pastilhas e discos</td>
-                        <td>R$ 620,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-002')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-002')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-003</td>
-                        <td>20/01/2024</td>
-                        <td>Ana Costa</td>
-                        <td>Chevrolet Onix Plus</td>
-                        <td>DEF5G45</td>
-                        <td>Troca de bateria</td>
-                        <td>R$ 380,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-003')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-003')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-004</td>
-                        <td>22/01/2024</td>
-                        <td>Pedro Santos</td>
-                        <td>Hyundai HB20 Vision</td>
-                        <td>GHI7H89</td>
-                        <td>Alinhamento e balanceamento</td>
-                        <td>R$ 120,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-004')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-004')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-005</td>
-                        <td>25/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de pneus (4 unidades)</td>
-                        <td>R$ 1.400,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-005')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-005')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-006</td>
-                        <td>28/01/2024</td>
-                        <td>Carlos Oliveira</td>
-                        <td>Volkswagen Gol</td>
-                        <td>JKL3M21</td>
-                        <td>Revisão completa + troca de correia</td>
-                        <td>R$ 850,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-006')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-006')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-007</td>
-                        <td>30/01/2024</td>
-                        <td>Fernanda Lima</td>
-                        <td>Fiat Argo</td>
-                        <td>NOP4Q56</td>
-                        <td>Troca de amortecedores dianteiros</td>
-                        <td>R$ 560,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-007')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-007')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-008</td>
-                        <td>02/02/2024</td>
-                        <td>Roberto Alves</td>
-                        <td>Ford Ka</td>
-                        <td>RST5U78</td>
-                        <td>Troca de embreagem completa</td>
-                        <td>R$ 1.200,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-008')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-008')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-009</td>
-                        <td>05/02/2024</td>
-                        <td>Juliana Santos</td>
-                        <td>Renault Kwid</td>
-                        <td>VWX6Y90</td>
-                        <td>Troca de radiador</td>
-                        <td>R$ 520,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-009')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-009')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-010</td>
-                        <td>08/02/2024</td>
-                        <td>Marcos Pereira</td>
-                        <td>Nissan Versa</td>
-                        <td>ZAB7C12</td>
-                        <td>Troca de bomba de combustível</td>
-                        <td>R$ 450,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="receivePayment('OS-2024-010')">Receber</button>
-                            <button class="btn-action btn-delete" onclick="viewOS('OS-2024-010')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                     <tfoot>
                       <tr style="background-color: #F5F6F7; font-weight: bold;">
@@ -1956,166 +1385,6 @@
                       </tr>
                     </thead>
                     <tbody id="paid-table-body">
-                      <tr>
-                        <td>OS-2023-125</td>
-                        <td>10/12/2023</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Revisão completa</td>
-                        <td>R$ 450,00</td>
-                        <td>12/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-125')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2023-126</td>
-                        <td>12/12/2023</td>
-                        <td>João Silva</td>
-                        <td>Toyota Corolla XEi</td>
-                        <td>XYZ9A87</td>
-                        <td>Troca de óleo e filtros</td>
-                        <td>R$ 165,00</td>
-                        <td>12/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-126')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2023-127</td>
-                        <td>15/12/2023</td>
-                        <td>Ana Costa</td>
-                        <td>Chevrolet Onix Plus</td>
-                        <td>DEF5G45</td>
-                        <td>Troca de pastilhas dianteiras</td>
-                        <td>R$ 280,00</td>
-                        <td>16/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-127')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2023-128</td>
-                        <td>18/12/2023</td>
-                        <td>Pedro Santos</td>
-                        <td>Hyundai HB20 Vision</td>
-                        <td>GHI7H89</td>
-                        <td>Alinhamento e balanceamento</td>
-                        <td>R$ 120,00</td>
-                        <td>18/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-128')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2023-129</td>
-                        <td>20/12/2023</td>
-                        <td>Carlos Oliveira</td>
-                        <td>Volkswagen Gol</td>
-                        <td>JKL3M21</td>
-                        <td>Troca de correia dentada</td>
-                        <td>R$ 320,00</td>
-                        <td>22/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-129')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2023-130</td>
-                        <td>22/12/2023</td>
-                        <td>Fernanda Lima</td>
-                        <td>Fiat Argo</td>
-                        <td>NOP4Q56</td>
-                        <td>Troca de amortecedores traseiros</td>
-                        <td>R$ 480,00</td>
-                        <td>23/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-130')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2023-131</td>
-                        <td>28/12/2023</td>
-                        <td>Roberto Alves</td>
-                        <td>Ford Ka</td>
-                        <td>RST5U78</td>
-                        <td>Troca de pneus (2 unidades)</td>
-                        <td>R$ 700,00</td>
-                        <td>29/12/2023</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2023-131')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-011</td>
-                        <td>10/01/2024</td>
-                        <td>Juliana Santos</td>
-                        <td>Renault Kwid</td>
-                        <td>VWX6Y90</td>
-                        <td>Troca de bateria</td>
-                        <td>R$ 380,00</td>
-                        <td>10/01/2024</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2024-011')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-012</td>
-                        <td>12/01/2024</td>
-                        <td>Marcos Pereira</td>
-                        <td>Nissan Versa</td>
-                        <td>ZAB7C12</td>
-                        <td>Troca de filtros (óleo, ar, combustível)</td>
-                        <td>R$ 145,00</td>
-                        <td>12/01/2024</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2024-012')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-013</td>
-                        <td>14/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de discos de freio</td>
-                        <td>R$ 420,00</td>
-                        <td>15/01/2024</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-delete" onclick="viewOSPaid('OS-2024-013')">Ver OS</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                     <tfoot>
                       <tr style="background-color: #F5F6F7; font-weight: bold;">
@@ -2124,6 +1393,64 @@
                         <td colspan="3"></td>
                       </tr>
                     </tfoot>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Formulário: Checklist do Carro -->
+              <div class="form-container" id="form-checklist">
+                <form class="customer_form" id="checklist-form" autocomplete="off">
+                  <div class="form-section">
+                    <h2>Identificação</h2>
+                    <div class="form-group">
+                      <label for="check-plate">Placa do veículo</label>
+                      <input type="text" id="check-plate" maxlength="7" placeholder="ABC1D23" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="check-km">Quilometragem</label>
+                      <input type="number" id="check-km" min="0" placeholder="Ex.: 65000" required />
+                    </div>
+                    <div class="form-group">
+                      <label for="check-date">Data</label>
+                      <input type="date" id="check-date" required />
+                    </div>
+                  </div>
+
+                  <div class="form-section">
+                    <h2>Itens Verificados</h2>
+                    <div class="form-group" style="flex-direction: column; gap: 6px;">
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="oleo" /> Nível do óleo</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="freios" /> Sistema de freios</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="pneus" /> Pneus / calibragem</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="suspensao" /> Suspensão</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="bateria" /> Bateria</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="luzes" /> Luzes / lâmpadas</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="agua" /> Nível de água / arrefecimento</label>
+                      <label style="display:flex;gap:8px;align-items:center;"><input type="checkbox" name="checkItem" value="filtros" /> Filtros</label>
+                    </div>
+                    <div class="form-group">
+                      <label for="check-notes">Observações</label>
+                      <textarea id="check-notes" rows="3" placeholder="Detalhes do checklist, peças trocadas, recomendações..."></textarea>
+                    </div>
+                  </div>
+                  <button type="submit" class="customer_form_button">Salvar Checklist</button>
+                </form>
+
+                <div class="customers-list" style="margin-top:24px;">
+                  <div class="customers-list-header">Histórico de Checklists</div>
+                  <table class="customers-table">
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>Placa</th>
+                        <th>KM</th>
+                        <th>Itens</th>
+                        <th>Observações</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="checklist-table-body">
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -2277,126 +1604,6 @@
                       </tr>
                     </thead>
                     <tbody id="pending-os-table-body">
-                      <tr>
-                        <td>OS-2024-001</td>
-                        <td>15/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de óleo e filtros</td>
-                        <td>R$ 185,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-001', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-002</td>
-                        <td>18/01/2024</td>
-                        <td>João Silva</td>
-                        <td>Toyota Corolla XEi</td>
-                        <td>XYZ9A87</td>
-                        <td>Troca de pastilhas e discos</td>
-                        <td>R$ 620,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-002', 'XYZ9A87', 'João Silva', 'Toyota Corolla XEi')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-003</td>
-                        <td>20/01/2024</td>
-                        <td>Ana Costa</td>
-                        <td>Chevrolet Onix Plus</td>
-                        <td>DEF5G45</td>
-                        <td>Troca de bateria</td>
-                        <td>R$ 380,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-003', 'DEF5G45', 'Ana Costa', 'Chevrolet Onix Plus')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-004</td>
-                        <td>22/01/2024</td>
-                        <td>Pedro Santos</td>
-                        <td>Hyundai HB20 Vision</td>
-                        <td>GHI7H89</td>
-                        <td>Alinhamento e balanceamento</td>
-                        <td>R$ 120,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-004', 'GHI7H89', 'Pedro Santos', 'Hyundai HB20 Vision')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-005</td>
-                        <td>25/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de pneus (4 unidades)</td>
-                        <td>R$ 1.400,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-005', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-006</td>
-                        <td>28/01/2024</td>
-                        <td>Carlos Oliveira</td>
-                        <td>Volkswagen Gol</td>
-                        <td>JKL3M21</td>
-                        <td>Revisão completa + troca de correia</td>
-                        <td>R$ 850,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-006', 'JKL3M21', 'Carlos Oliveira', 'Volkswagen Gol')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-007</td>
-                        <td>30/01/2024</td>
-                        <td>Fernanda Lima</td>
-                        <td>Fiat Argo</td>
-                        <td>NOP4Q56</td>
-                        <td>Troca de amortecedores dianteiros</td>
-                        <td>R$ 560,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-007', 'NOP4Q56', 'Fernanda Lima', 'Fiat Argo')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-008</td>
-                        <td>02/02/2024</td>
-                        <td>Roberto Alves</td>
-                        <td>Ford Ka</td>
-                        <td>RST5U78</td>
-                        <td>Troca de embreagem completa</td>
-                        <td>R$ 1.200,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-008', 'RST5U78', 'Roberto Alves', 'Ford Ka')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-009</td>
-                        <td>05/02/2024</td>
-                        <td>Juliana Santos</td>
-                        <td>Renault Kwid</td>
-                        <td>VWX6Y90</td>
-                        <td>Troca de radiador</td>
-                        <td>R$ 520,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-009', 'VWX6Y90', 'Juliana Santos', 'Renault Kwid')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-010</td>
-                        <td>08/02/2024</td>
-                        <td>Marcos Pereira</td>
-                        <td>Nissan Versa</td>
-                        <td>ZAB7C12</td>
-                        <td>Troca de bomba de combustível</td>
-                        <td>R$ 450,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForCancel('OS-2024-010', 'ZAB7C12', 'Marcos Pereira', 'Nissan Versa')">Selecionar</button>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -2478,126 +1685,6 @@
                       </tr>
                     </thead>
                     <tbody id="pending-os-finish-table-body">
-                      <tr>
-                        <td>OS-2024-001</td>
-                        <td>15/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de óleo e filtros</td>
-                        <td>R$ 185,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-001', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring', 'Troca de óleo e filtros', '185.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-002</td>
-                        <td>18/01/2024</td>
-                        <td>João Silva</td>
-                        <td>Toyota Corolla XEi</td>
-                        <td>XYZ9A87</td>
-                        <td>Troca de pastilhas e discos</td>
-                        <td>R$ 620,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-002', 'XYZ9A87', 'João Silva', 'Toyota Corolla XEi', 'Troca de pastilhas e discos', '620.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-003</td>
-                        <td>20/01/2024</td>
-                        <td>Ana Costa</td>
-                        <td>Chevrolet Onix Plus</td>
-                        <td>DEF5G45</td>
-                        <td>Troca de bateria</td>
-                        <td>R$ 380,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-003', 'DEF5G45', 'Ana Costa', 'Chevrolet Onix Plus', 'Troca de bateria', '380.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-004</td>
-                        <td>22/01/2024</td>
-                        <td>Pedro Santos</td>
-                        <td>Hyundai HB20 Vision</td>
-                        <td>GHI7H89</td>
-                        <td>Alinhamento e balanceamento</td>
-                        <td>R$ 120,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-004', 'GHI7H89', 'Pedro Santos', 'Hyundai HB20 Vision', 'Alinhamento e balanceamento', '120.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-005</td>
-                        <td>25/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de pneus (4 unidades)</td>
-                        <td>R$ 1.400,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-005', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring', 'Troca de pneus (4 unidades)', '1400.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-006</td>
-                        <td>28/01/2024</td>
-                        <td>Carlos Oliveira</td>
-                        <td>Volkswagen Gol</td>
-                        <td>JKL3M21</td>
-                        <td>Revisão completa + troca de correia</td>
-                        <td>R$ 850,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-006', 'JKL3M21', 'Carlos Oliveira', 'Volkswagen Gol', 'Revisão completa + troca de correia', '850.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-007</td>
-                        <td>30/01/2024</td>
-                        <td>Fernanda Lima</td>
-                        <td>Fiat Argo</td>
-                        <td>NOP4Q56</td>
-                        <td>Troca de amortecedores dianteiros</td>
-                        <td>R$ 560,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-007', 'NOP4Q56', 'Fernanda Lima', 'Fiat Argo', 'Troca de amortecedores dianteiros', '560.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-008</td>
-                        <td>02/02/2024</td>
-                        <td>Roberto Alves</td>
-                        <td>Ford Ka</td>
-                        <td>RST5U78</td>
-                        <td>Troca de embreagem completa</td>
-                        <td>R$ 1.200,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-008', 'RST5U78', 'Roberto Alves', 'Ford Ka', 'Troca de embreagem completa', '1200.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-009</td>
-                        <td>05/02/2024</td>
-                        <td>Juliana Santos</td>
-                        <td>Renault Kwid</td>
-                        <td>VWX6Y90</td>
-                        <td>Troca de radiador</td>
-                        <td>R$ 520,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-009', 'VWX6Y90', 'Juliana Santos', 'Renault Kwid', 'Troca de radiador', '520.00')">Selecionar</button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>OS-2024-010</td>
-                        <td>08/02/2024</td>
-                        <td>Marcos Pereira</td>
-                        <td>Nissan Versa</td>
-                        <td>ZAB7C12</td>
-                        <td>Troca de bomba de combustível</td>
-                        <td>R$ 450,00</td>
-                        <td>
-                          <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-010', 'ZAB7C12', 'Marcos Pereira', 'Nissan Versa', 'Troca de bomba de combustível', '450.00')">Selecionar</button>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -2705,169 +1792,6 @@
                       </tr>
                     </thead>
                     <tbody id="all-os-table-body">
-                      <!-- OS Pendentes -->
-                      <tr data-status="pendente">
-                        <td>OS-2024-001</td>
-                        <td>15/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de óleo e filtros</td>
-                        <td>R$ 185,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2024-001')">Ver</button>
-                            <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-001', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring', 'Troca de óleo e filtros', '185.00')">Finalizar</button>
-                            <button class="btn-action btn-delete" onclick="selectOSForCancel('OS-2024-001', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring')">Cancelar</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="pendente">
-                        <td>OS-2024-002</td>
-                        <td>18/01/2024</td>
-                        <td>João Silva</td>
-                        <td>Toyota Corolla XEi</td>
-                        <td>XYZ9A87</td>
-                        <td>Troca de pastilhas e discos</td>
-                        <td>R$ 620,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2024-002')">Ver</button>
-                            <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-002', 'XYZ9A87', 'João Silva', 'Toyota Corolla XEi', 'Troca de pastilhas e discos', '620.00')">Finalizar</button>
-                            <button class="btn-action btn-delete" onclick="selectOSForCancel('OS-2024-002', 'XYZ9A87', 'João Silva', 'Toyota Corolla XEi')">Cancelar</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="pendente">
-                        <td>OS-2024-003</td>
-                        <td>20/01/2024</td>
-                        <td>Ana Costa</td>
-                        <td>Chevrolet Onix Plus</td>
-                        <td>DEF5G45</td>
-                        <td>Troca de bateria</td>
-                        <td>R$ 380,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2024-003')">Ver</button>
-                            <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-003', 'DEF5G45', 'Ana Costa', 'Chevrolet Onix Plus', 'Troca de bateria', '380.00')">Finalizar</button>
-                            <button class="btn-action btn-delete" onclick="selectOSForCancel('OS-2024-003', 'DEF5G45', 'Ana Costa', 'Chevrolet Onix Plus')">Cancelar</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="pendente">
-                        <td>OS-2024-004</td>
-                        <td>22/01/2024</td>
-                        <td>Pedro Santos</td>
-                        <td>Hyundai HB20 Vision</td>
-                        <td>GHI7H89</td>
-                        <td>Alinhamento e balanceamento</td>
-                        <td>R$ 120,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2024-004')">Ver</button>
-                            <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-004', 'GHI7H89', 'Pedro Santos', 'Hyundai HB20 Vision', 'Alinhamento e balanceamento', '120.00')">Finalizar</button>
-                            <button class="btn-action btn-delete" onclick="selectOSForCancel('OS-2024-004', 'GHI7H89', 'Pedro Santos', 'Hyundai HB20 Vision')">Cancelar</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="pendente">
-                        <td>OS-2024-005</td>
-                        <td>25/01/2024</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Troca de pneus (4 unidades)</td>
-                        <td>R$ 1.400,00</td>
-                        <td><span style="color: #DC3545; font-weight: bold;">Pendente</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2024-005')">Ver</button>
-                            <button class="btn-action btn-edit" onclick="selectOSForFinish('OS-2024-005', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring', 'Troca de pneus (4 unidades)', '1400.00')">Finalizar</button>
-                            <button class="btn-action btn-delete" onclick="selectOSForCancel('OS-2024-005', 'ABC1D23', 'Maria Souza', 'Honda Civic Touring')">Cancelar</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <!-- OS Pagas -->
-                      <tr data-status="pago">
-                        <td>OS-2023-125</td>
-                        <td>10/12/2023</td>
-                        <td>Maria Souza</td>
-                        <td>Honda Civic Touring</td>
-                        <td>ABC1D23</td>
-                        <td>Revisão completa</td>
-                        <td>R$ 450,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2023-125')">Ver</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="pago">
-                        <td>OS-2023-126</td>
-                        <td>12/12/2023</td>
-                        <td>João Silva</td>
-                        <td>Toyota Corolla XEi</td>
-                        <td>XYZ9A87</td>
-                        <td>Troca de óleo e filtros</td>
-                        <td>R$ 165,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2023-126')">Ver</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="pago">
-                        <td>OS-2023-127</td>
-                        <td>15/12/2023</td>
-                        <td>Ana Costa</td>
-                        <td>Chevrolet Onix Plus</td>
-                        <td>DEF5G45</td>
-                        <td>Troca de pastilhas dianteiras</td>
-                        <td>R$ 280,00</td>
-                        <td><span style="color: #50C878; font-weight: bold;">Pago</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2023-127')">Ver</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <!-- OS Canceladas -->
-                      <tr data-status="cancelado">
-                        <td>OS-2023-120</td>
-                        <td>05/12/2023</td>
-                        <td>Carlos Mendes</td>
-                        <td>Volkswagen Polo</td>
-                        <td>MNO8P34</td>
-                        <td>Troca de correia</td>
-                        <td>R$ 320,00</td>
-                        <td><span style="color: #9BA4B5; font-weight: bold;">Cancelado</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2023-120')">Ver</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr data-status="cancelado">
-                        <td>OS-2023-121</td>
-                        <td>07/12/2023</td>
-                        <td>Patricia Lima</td>
-                        <td>Fiat Uno</td>
-                        <td>QRS9T56</td>
-                        <td>Revisão geral</td>
-                        <td>R$ 350,00</td>
-                        <td><span style="color: #9BA4B5; font-weight: bold;">Cancelado</span></td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewOSDetails('OS-2023-121')">Ver</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -2919,156 +1843,6 @@
                       </tr>
                     </thead>
                     <tbody id="plate-search-table-body">
-                      <tr>
-                        <td>ABC1D23</td>
-                        <td>Civic Touring</td>
-                        <td>Honda</td>
-                        <td>2022</td>
-                        <td>Prata</td>
-                        <td>Maria Souza</td>
-                        <td>maria.souza@email.com</td>
-                        <td>(11) 99999-1234</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('ABC1D23')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>XYZ9A87</td>
-                        <td>Corolla XEi</td>
-                        <td>Toyota</td>
-                        <td>2021</td>
-                        <td>Branco</td>
-                        <td>João Silva</td>
-                        <td>joao.silva@email.com</td>
-                        <td>(11) 98888-5678</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('XYZ9A87')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>DEF5G45</td>
-                        <td>Onix Plus</td>
-                        <td>Chevrolet</td>
-                        <td>2023</td>
-                        <td>Preto</td>
-                        <td>Ana Costa</td>
-                        <td>ana.costa@email.com</td>
-                        <td>(11) 97777-9012</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('DEF5G45')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>GHI7H89</td>
-                        <td>HB20 Vision</td>
-                        <td>Hyundai</td>
-                        <td>2020</td>
-                        <td>Vermelho</td>
-                        <td>Pedro Santos</td>
-                        <td>pedro.santos@email.com</td>
-                        <td>(11) 96666-3456</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('GHI7H89')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>JKL3M21</td>
-                        <td>Gol</td>
-                        <td>Volkswagen</td>
-                        <td>2019</td>
-                        <td>Azul</td>
-                        <td>Carlos Oliveira</td>
-                        <td>carlos.oliveira@email.com</td>
-                        <td>(11) 95555-7890</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('JKL3M21')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>NOP4Q56</td>
-                        <td>Argo</td>
-                        <td>Fiat</td>
-                        <td>2021</td>
-                        <td>Branco</td>
-                        <td>Fernanda Lima</td>
-                        <td>fernanda.lima@email.com</td>
-                        <td>(11) 94444-1234</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('NOP4Q56')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>RST5U78</td>
-                        <td>Ka</td>
-                        <td>Ford</td>
-                        <td>2020</td>
-                        <td>Prata</td>
-                        <td>Roberto Alves</td>
-                        <td>roberto.alves@email.com</td>
-                        <td>(11) 93333-5678</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('RST5U78')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>VWX6Y90</td>
-                        <td>Kwid</td>
-                        <td>Renault</td>
-                        <td>2022</td>
-                        <td>Preto</td>
-                        <td>Juliana Santos</td>
-                        <td>juliana.santos@email.com</td>
-                        <td>(11) 92222-9012</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('VWX6Y90')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>ZAB7C12</td>
-                        <td>Versa</td>
-                        <td>Nissan</td>
-                        <td>2021</td>
-                        <td>Branco</td>
-                        <td>Marcos Pereira</td>
-                        <td>marcos.pereira@email.com</td>
-                        <td>(11) 91111-3456</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('ZAB7C12')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>MNO8P34</td>
-                        <td>Polo</td>
-                        <td>Volkswagen</td>
-                        <td>2023</td>
-                        <td>Vermelho</td>
-                        <td>Carlos Mendes</td>
-                        <td>carlos.mendes@email.com</td>
-                        <td>(11) 90000-7890</td>
-                        <td>
-                          <div class="action-buttons">
-                            <button class="btn-action btn-edit" onclick="viewVehicleByPlate('MNO8P34')">Ver Detalhes</button>
-                          </div>
-                        </td>
-                      </tr>
                     </tbody>
                   </table>
                 </div>
