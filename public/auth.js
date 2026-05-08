@@ -665,7 +665,7 @@
         <div class="auth-banner">
           <div class="auth-banner-top">
             <div class="auth-banner-mark">
-              <img src="/logo-dihmec.svg" alt="DIHMEC"
+              <img src="/logo-dihmec.png" alt="DIHMEC"
                    onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
               <span style="display:none">DIHMEC</span>
             </div>

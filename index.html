@@ -88,6 +88,14 @@
     display: block;
   }
 
+  .sidebar-logo-svg {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+    max-height: 140px;
+    display: block;
+  }
+
   .sidebar-logo-text {
     display: none;
     font-size: 1.5rem;
@@ -1083,9 +1091,51 @@
       <!-- Menu Lateral -->
       <aside class="sidebar">
         <div class="sidebar-logo">
-          <img src="logo-dihmec.svg" data-fallback="logo-dihmec.png" alt="DIHMEC Logo" id="sidebar-logo-img" onerror="handleSidebarLogoError()" />
-          <img src="dihmec-logo.png" alt="DIHMEC Logo" id="sidebar-logo-img-alt" style="display: none;" onerror="handleSidebarLogoError()" />
-          <h1 class="sidebar-logo-text" id="sidebar-logo-text">DIHMEC</h1>
+          <svg class="sidebar-logo-svg" viewBox="0 0 260 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DIHMEC">
+            <defs>
+              <linearGradient id="dihmec-metal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#e8e8e8"/>
+                <stop offset="100%" stop-color="#7a7a7a"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Marca-d'agua: 2 chaves de boca cruzadas + pistao no meio -->
+            <g class="sidebar-logo-watermark" opacity="0.18" fill="url(#dihmec-metal)">
+              <!-- Chave 1: rotacionada +30deg -->
+              <g transform="rotate(30 130 70)">
+                <rect x="40" y="66" width="180" height="8" rx="1.5"/>
+                <!-- boca esquerda -->
+                <path d="M 40 58 L 26 58 L 26 82 L 40 82 L 40 76 L 33 76 L 33 64 L 40 64 Z"/>
+                <!-- boca direita -->
+                <path d="M 220 58 L 234 58 L 234 82 L 220 82 L 220 76 L 227 76 L 227 64 L 220 64 Z"/>
+              </g>
+              <!-- Chave 2: rotacionada -30deg -->
+              <g transform="rotate(-30 130 70)">
+                <rect x="40" y="66" width="180" height="8" rx="1.5"/>
+                <path d="M 40 58 L 26 58 L 26 82 L 40 82 L 40 76 L 33 76 L 33 64 L 40 64 Z"/>
+                <path d="M 220 58 L 234 58 L 234 82 L 220 82 L 220 76 L 227 76 L 227 64 L 220 64 Z"/>
+              </g>
+              <!-- Pistao vertical no centro -->
+              <g transform="translate(130 70)">
+                <rect x="-15" y="-46" width="30" height="20" rx="2"/>
+                <rect x="-15" y="-24" width="30" height="2"/>
+                <rect x="-15" y="-19" width="30" height="2"/>
+                <rect x="-6" y="-13" width="12" height="32"/>
+                <ellipse cx="0" cy="24" rx="17" ry="7"/>
+              </g>
+            </g>
+
+            <!-- DIHMEC em destaque -->
+            <text x="130" y="86"
+                  text-anchor="middle"
+                  font-family="Impact, 'Arial Narrow', Arial, sans-serif"
+                  font-size="46"
+                  font-weight="900"
+                  font-style="italic"
+                  letter-spacing="3"
+                  fill="#ffffff"
+                  style="paint-order:stroke;stroke:#000;stroke-width:1px;">DIHMEC</text>
+          </svg>
         </div>
         <div class="sidebar-header">
           <h2>Menu</h2>
@@ -1121,7 +1171,7 @@
           <div class="dihmec-banner" id="dihmec-banner">
             <div class="dihmec-banner-top">
               <div class="dihmec-logo-mark">
-                <img src="logo-dihmec.svg" data-fallback="logo-dihmec.png" alt="DIHMEC" id="banner-logo-img"
+                <img src="logo-dihmec.png" alt="DIHMEC" id="banner-logo-img"
                      onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
                 <span class="dihmec-logo-text" style="display:none">DIHMEC</span>
               </div>
@@ -1150,7 +1200,7 @@
 
           <div class="page_header with-brand-banner">
             <div class="logo-container">
-              <img src="logo-dihmec.svg" data-fallback="logo-dihmec.png" alt="DIHMEC Logo" class="logo-image" id="logo-img" onerror="handleLogoError()" />
+              <img src="logo-dihmec.png" alt="DIHMEC Logo" class="logo-image" id="logo-img" onerror="handleLogoError()" />
               <h1 id="logo-text" style="display: none; color: #212738; font-size: 32pt; font-weight: bold; letter-spacing: 2px; margin: 0;">DIHMEC</h1>
             </div>
             <div>
@@ -2005,7 +2055,7 @@
                 <div class="customers-list" id="report-results" style="margin-top: 30px; display: none;">
                   <div class="customers-list-header" style="display: flex; align-items: center; justify-content: space-between;">
                     <span id="report-title">Relatório de Ordens de Serviço</span>
-                    <img src="logo-dihmec.svg" data-fallback="logo-dihmec.png" alt="DIHMEC Logo" style="max-height: 50px; max-width: 150px; object-fit: contain;" onerror="this.style.display='none';" />
+                    <img src="logo-dihmec.png" alt="DIHMEC Logo" style="max-height: 50px; max-width: 150px; object-fit: contain;" onerror="this.style.display='none';" />
                   </div>
                   <div style="padding: 16px; background-color: #F5F6F7; border-bottom: 1px solid #CED4DA;">
                     <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
