@@ -674,33 +674,34 @@
     background: var(--border);
   }
 
-  /* Botão de Toggle Dia/Noite */
+  /* Botão de Toggle Dia/Noite — agora dentro da sidebar, abaixo do menu */
+  .sidebar-theme-toggle {
+    margin: 8px 16px 20px;
+    border-top: 1px solid var(--sidebar-border);
+    padding-top: 16px;
+  }
   .theme-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
+    width: 100%;
     background: var(--text-primary);
     color: #fff;
     border: none;
     border-radius: 999px;
-    padding: 10px 18px;
+    padding: 10px 16px;
     cursor: pointer;
     font-size: 0.8125rem;
     font-weight: 600;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-sm);
     transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
     display: flex;
     align-items: center;
     gap: 8px;
-    min-width: 140px;
     justify-content: center;
   }
 
   .theme-toggle:hover {
     background: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(232, 93, 4, 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(232, 93, 4, 0.30);
   }
 
   .theme-toggle:active {
@@ -1078,12 +1079,6 @@
     </style>
   </head>
   <body>
-    <!-- Botão de Toggle Dia/Noite -->
-    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar entre modo claro e escuro">
-      <span id="theme-icon">🌙</span>
-      <span id="theme-text">Modo Escuro</span>
-    </button>
-
     <div class="container">
       <!-- Menu Lateral -->
       <aside class="sidebar">
@@ -1110,6 +1105,12 @@
           <li><a href="#" class="menu-item" data-form="relatorio-os">Relatório de Ordem de Serviço</a></li>
           <li><a href="diagrama.html" class="menu-item">Diagrama</a></li>
         </ul>
+        <div class="sidebar-theme-toggle">
+          <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Alternar entre modo claro e escuro">
+            <span id="theme-icon">🌙</span>
+            <span id="theme-text">Modo Escuro</span>
+          </button>
+        </div>
       </aside>
 
       <!-- Conteúdo Principal -->
