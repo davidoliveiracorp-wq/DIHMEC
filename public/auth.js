@@ -326,16 +326,12 @@
       position: relative; z-index: 2;
     }
     .auth-banner-mark {
-      flex-shrink: 0; width: 60px; height: 60px;
-      border: 2px solid #888; border-radius: 50%;
+      flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      background: radial-gradient(circle at 30% 30%, #3a3a3a 0%, #0d0d0d 70%);
-      box-shadow: inset 0 0 10px rgba(255,255,255,0.05),
-                  0 4px 10px rgba(0,0,0,0.4);
     }
-    .auth-banner-mark img { max-width: 78%; max-height: 78%; object-fit: contain; }
-    .auth-banner-mark span {
-      color: #fff; font-weight: 800; font-size: 12px; letter-spacing: 1.5px;
+    .auth-banner-mark svg {
+      width: 140px; height: auto; max-height: 76px;
+      display: block;
     }
     .auth-banner-info { flex: 1; min-width: 0; }
     .auth-banner-info h3 {
@@ -665,12 +661,44 @@
         <div class="auth-banner">
           <div class="auth-banner-top">
             <div class="auth-banner-mark">
-              <img src="/logo-dihmec.png" alt="DIHMEC"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
-              <span style="display:none">DIHMEC</span>
+              <svg viewBox="0 0 260 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DIHMEC">
+                <defs>
+                  <linearGradient id="auth-dihmec-metal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#e8e8e8"/>
+                    <stop offset="100%" stop-color="#7a7a7a"/>
+                  </linearGradient>
+                </defs>
+                <g opacity="0.22" fill="url(#auth-dihmec-metal)">
+                  <g transform="rotate(30 130 70)">
+                    <rect x="40" y="66" width="180" height="8" rx="1.5"/>
+                    <path d="M 40 58 L 26 58 L 26 82 L 40 82 L 40 76 L 33 76 L 33 64 L 40 64 Z"/>
+                    <path d="M 220 58 L 234 58 L 234 82 L 220 82 L 220 76 L 227 76 L 227 64 L 220 64 Z"/>
+                  </g>
+                  <g transform="rotate(-30 130 70)">
+                    <rect x="40" y="66" width="180" height="8" rx="1.5"/>
+                    <path d="M 40 58 L 26 58 L 26 82 L 40 82 L 40 76 L 33 76 L 33 64 L 40 64 Z"/>
+                    <path d="M 220 58 L 234 58 L 234 82 L 220 82 L 220 76 L 227 76 L 227 64 L 220 64 Z"/>
+                  </g>
+                  <g transform="translate(130 70)">
+                    <rect x="-15" y="-46" width="30" height="20" rx="2"/>
+                    <rect x="-15" y="-24" width="30" height="2"/>
+                    <rect x="-15" y="-19" width="30" height="2"/>
+                    <rect x="-6" y="-13" width="12" height="32"/>
+                    <ellipse cx="0" cy="24" rx="17" ry="7"/>
+                  </g>
+                </g>
+                <text x="130" y="86"
+                      text-anchor="middle"
+                      font-family="Impact, 'Arial Narrow', Arial, sans-serif"
+                      font-size="46"
+                      font-weight="900"
+                      font-style="italic"
+                      letter-spacing="3"
+                      fill="#ffffff"
+                      style="paint-order:stroke;stroke:#000;stroke-width:1px;">DIHMEC</text>
+              </svg>
             </div>
             <div class="auth-banner-info">
-              <h3>DIHMEC</h3>
               <p>Mecânico · Injeção · Diesel · Flex · Multimarcas</p>
               <p class="auth-banner-phone">📞 (11) 99508-6683 — Edimar</p>
             </div>
