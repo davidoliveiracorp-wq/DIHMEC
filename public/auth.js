@@ -10,6 +10,18 @@
   const STORAGE_USERS = 'dihmec_users';
   const STORAGE_SESSION = 'dihmec_session';
   const STORAGE_PERMISSIONS = 'dihmec_permissions';
+  const STORAGE_RESET = 'dihmec_reset_token';
+  const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutos
+
+  // Política de complexidade de senha
+  function validatePasswordComplexity(password) {
+    const p = String(password || '');
+    if (p.length < 8) throw new Error('A senha deve ter no mínimo 8 caracteres.');
+    if (!/[A-Z]/.test(p)) throw new Error('A senha deve conter ao menos uma letra maiúscula.');
+    if (!/\d/.test(p)) throw new Error('A senha deve conter ao menos um número.');
+    if (!/[!@#$%^&*()_+\-=\[\]{};:'",.<>\/?\\|`~]/.test(p))
+      throw new Error('A senha deve conter ao menos um caractere especial (ex.: ! @ # $ % * ?).');
+  }
 
   // Permissões padrão para usuários comuns recém-cadastrados.
   const DEFAULT_USER_PERMISSIONS = ['cadastro-cliente', 'checklist', 'nova-os'];
@@ -214,7 +226,7 @@
     email = (email || '').trim().toLowerCase();
     if (!name || !email || !password) throw new Error('Preencha todos os campos.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('E-mail inválido.');
-    if (password.length < 6) throw new Error('A senha deve ter no mínimo 6 caracteres.');
+    validatePasswordComplexity(password);
     const users = getUsers();
     if (users.some((u) => u.email === email)) throw new Error('E-mail já cadastrado.');
     const role = isSuperAdminEmail(email) ? 'superadmin' : 'user';
@@ -231,6 +243,78 @@
       }
     }
     return { name: user.name, email: user.email, role: user.role };
+  }
+
+  // ---------- Reset de senha ----------
+  function requestPasswordReset(email) {
+    email = (email || '').trim().toLowerCase();
+    if (!email) throw new Error('Informe o e-mail.');
+    const users = getUsers();
+    const user = users.find((u) => u.email === email);
+    if (!user) throw new Error('E-mail não cadastrado.');
+    // Gera token de 6 dígitos
+    const token = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = Date.now() + RESET_TOKEN_TTL_MS;
+    localStorage.setItem(STORAGE_RESET, JSON.stringify({ email, token, expiresAt }));
+    // Hook para envio real por e-mail (EmailJS, backend etc.). Se a integração
+    // não estiver configurada, o caller exibe o token na tela.
+    if (typeof window.DIHMEC_SEND_RESET_EMAIL === 'function') {
+      try { window.DIHMEC_SEND_RESET_EMAIL({ email, token, expiresAt }); }
+      catch (e) { console.warn('[DIHMECAuth] Falha ao enviar e-mail:', e); }
+    }
+    return { email, token, expiresAt };
+  }
+
+  async function resetPasswordWithToken({ email, token, newPassword }) {
+    email = (email || '').trim().toLowerCase();
+    token = String(token || '').trim();
+    if (!email || !token) throw new Error('Informe e-mail e token.');
+    validatePasswordComplexity(newPassword);
+    const data = JSON.parse(localStorage.getItem(STORAGE_RESET) || 'null');
+    if (!data) throw new Error('Nenhuma solicitação de reset ativa. Solicite um novo token.');
+    if (Date.now() > data.expiresAt) {
+      localStorage.removeItem(STORAGE_RESET);
+      throw new Error('Token expirado. Solicite um novo.');
+    }
+    if (data.email !== email) throw new Error('E-mail não confere com a solicitação.');
+    if (data.token !== token) throw new Error('Token inválido.');
+    const users = getUsers();
+    const user = users.find((u) => u.email === email);
+    if (!user) throw new Error('Usuário não encontrado.');
+    user.passwordHash = await hashPassword(newPassword);
+    saveUsers(users);
+    localStorage.removeItem(STORAGE_RESET);
+    return true;
+  }
+
+  // ---------- Console helpers de emergência ----------
+  async function emergencyResetPassword(email, newPassword) {
+    email = String(email || '').trim().toLowerCase();
+    validatePasswordComplexity(newPassword);
+    const users = getUsers();
+    const user = users.find((u) => u.email === email);
+    if (!user) throw new Error('Usuário não encontrado em ' + email + '.');
+    user.passwordHash = await hashPassword(newPassword);
+    saveUsers(users);
+    return true;
+  }
+
+  async function bootstrapSuperAdmin(email, password, name) {
+    email = String(email || '').trim().toLowerCase();
+    if (!isSuperAdminEmail(email))
+      throw new Error('E-mail ' + email + ' não está na lista de super admins.');
+    validatePasswordComplexity(password);
+    const users = getUsers().filter((u) => u.email !== email);
+    const passwordHash = await hashPassword(password);
+    users.push({
+      name: (name || email.split('@')[0]).trim(),
+      email,
+      passwordHash,
+      role: 'superadmin',
+      createdAt: Date.now(),
+    });
+    saveUsers(users);
+    return true;
   }
 
   async function login({ email, password }) {
@@ -402,6 +486,44 @@
     .auth-plate-status.show { display: block; }
     .auth-plate-status.found { color: #6dd58c; }
     .auth-plate-status.missing { color: #ffb54a; }
+
+    /* Link "Esqueci minha senha" e tela de reset */
+    .auth-link {
+      background: none; border: none; cursor: pointer;
+      color: #ff6b6b; font-size: 12px; font-weight: 600;
+      margin-top: 10px; padding: 4px 0;
+      font-family: inherit; text-align: center;
+      width: 100%; display: block;
+    }
+    .auth-link:hover { text-decoration: underline; color: #ff8a8a; }
+    .auth-back {
+      background: none; border: none; cursor: pointer;
+      color: #a0a0a8; font-size: 12px; font-weight: 500;
+      padding: 4px 0; margin-bottom: 8px;
+      font-family: inherit; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .auth-back:hover { color: #f0f0f0; }
+    .auth-token-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed #3a3a42;
+      border-radius: 8px; padding: 10px 12px;
+      margin: 10px 0; font-size: 12px; color: #e0e0e0;
+    }
+    .auth-token-box strong {
+      display: block; font-family: 'Courier New', monospace;
+      font-size: 22px; letter-spacing: 4px;
+      color: #ffb54a; text-align: center;
+      margin-top: 4px;
+    }
+    .auth-token-box small {
+      display: block; margin-top: 6px; color: #80808a; font-size: 10px;
+    }
+    .auth-pwd-hint {
+      font-size: 11px; color: #80808a; margin-top: 4px;
+      line-height: 1.4;
+    }
+    .auth-pwd-hint.ok { color: #6dd58c; }
+    .auth-pwd-hint.bad { color: #ffb54a; }
     .auth-submit {
       width: 100%; margin-top: 8px;
       padding: 11px 14px; border: none; border-radius: 8px;
@@ -734,6 +856,45 @@
           </div>
           <button type="submit" class="auth-submit">Entrar</button>
           <div class="auth-error" id="auth-login-error"></div>
+          <button type="button" class="auth-link" id="auth-forgot-btn">Esqueci minha senha</button>
+        </form>
+
+        <form id="auth-form-reset" novalidate style="display:none">
+          <button type="button" class="auth-back" id="auth-reset-back">← Voltar ao login</button>
+          <h2 style="margin:6px 0 4px">Recuperar senha</h2>
+          <p class="auth-sub">Informe seu e-mail cadastrado para gerar um token de redefinição (válido por 15 min).</p>
+
+          <div class="auth-field">
+            <label for="auth-reset-email">E-mail cadastrado</label>
+            <input type="email" id="auth-reset-email" autocomplete="email" required />
+          </div>
+          <button type="button" class="auth-submit" id="auth-reset-request">Gerar token</button>
+
+          <div class="auth-token-box" id="auth-reset-token-box" style="display:none">
+            Seu token de redefinição:
+            <strong id="auth-reset-token-value">------</strong>
+            <small id="auth-reset-token-note">Como o site é estático, o token é exibido aqui. Para receber por e-mail, integre EmailJS (peça que eu plugo).</small>
+          </div>
+
+          <div id="auth-reset-step2" style="display:none">
+            <div class="auth-field" style="margin-top:14px">
+              <label for="auth-reset-token-input">Token recebido</label>
+              <input type="text" id="auth-reset-token-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
+            </div>
+            <div class="auth-field">
+              <label for="auth-reset-newpwd">Nova senha</label>
+              <input type="password" id="auth-reset-newpwd" autocomplete="new-password" />
+              <p class="auth-pwd-hint">Mín. 8 caracteres · letra maiúscula · número · caractere especial (! @ # $ % * ?)</p>
+            </div>
+            <div class="auth-field">
+              <label for="auth-reset-confirm">Confirmar nova senha</label>
+              <input type="password" id="auth-reset-confirm" autocomplete="new-password" />
+            </div>
+            <button type="submit" class="auth-submit">Redefinir senha</button>
+          </div>
+
+          <div class="auth-error" id="auth-reset-error"></div>
+          <div class="auth-success" id="auth-reset-success"></div>
         </form>
 
         <form id="auth-form-schedule" novalidate style="display:none">
@@ -789,8 +950,11 @@
     const card = overlay.querySelector('.auth-card');
     const tabs = overlay.querySelectorAll('.auth-tab');
     const loginForm = overlay.querySelector('#auth-form-login');
+    const resetForm = overlay.querySelector('#auth-form-reset');
     const scheduleForm = overlay.querySelector('#auth-form-schedule');
     const loginError = overlay.querySelector('#auth-login-error');
+    const resetError = overlay.querySelector('#auth-reset-error');
+    const resetSuccess = overlay.querySelector('#auth-reset-success');
     const schedError = overlay.querySelector('#auth-sched-error');
     const schedSuccess = overlay.querySelector('#auth-sched-success');
     const slotsContainer = overlay.querySelector('#sched-slots');
@@ -855,24 +1019,81 @@
     plateInput.addEventListener('input', updatePlateStatus);
     plateInput.addEventListener('blur', updatePlateStatus);
 
+    function showView(which) {
+      tabs.forEach((x) => x.classList.toggle('active', x.getAttribute('data-tab') === which));
+      loginForm.style.display    = which === 'login'    ? '' : 'none';
+      resetForm.style.display    = which === 'reset'    ? '' : 'none';
+      scheduleForm.style.display = which === 'schedule' ? '' : 'none';
+      card.classList.toggle('wide', which === 'schedule');
+      if (which === 'schedule') renderSlotsForDate(dateInput.value);
+      loginError.classList.remove('show');
+      resetError.classList.remove('show');
+      resetSuccess.classList.remove('show');
+      schedError.classList.remove('show');
+      schedSuccess.classList.remove('show');
+    }
     tabs.forEach((t) =>
-      t.addEventListener('click', () => {
-        tabs.forEach((x) => x.classList.remove('active'));
-        t.classList.add('active');
-        const which = t.getAttribute('data-tab');
-        loginForm.style.display = which === 'login' ? '' : 'none';
-        scheduleForm.style.display = which === 'schedule' ? '' : 'none';
-        if (which === 'schedule') {
-          card.classList.add('wide');
-          renderSlotsForDate(dateInput.value);
-        } else {
-          card.classList.remove('wide');
-        }
-        loginError.classList.remove('show');
-        schedError.classList.remove('show');
-        schedSuccess.classList.remove('show');
-      })
+      t.addEventListener('click', () => showView(t.getAttribute('data-tab')))
     );
+
+    // Esqueci minha senha
+    overlay.querySelector('#auth-forgot-btn').addEventListener('click', () => {
+      overlay.querySelector('#auth-reset-token-box').style.display = 'none';
+      overlay.querySelector('#auth-reset-step2').style.display = 'none';
+      overlay.querySelector('#auth-reset-email').value =
+        overlay.querySelector('#auth-login-email').value || '';
+      showView('reset');
+    });
+    overlay.querySelector('#auth-reset-back').addEventListener('click', () => {
+      showView('login');
+    });
+
+    // Solicitar token
+    overlay.querySelector('#auth-reset-request').addEventListener('click', () => {
+      resetError.classList.remove('show');
+      resetSuccess.classList.remove('show');
+      const email = overlay.querySelector('#auth-reset-email').value;
+      try {
+        const r = requestPasswordReset(email);
+        overlay.querySelector('#auth-reset-token-value').textContent = r.token;
+        overlay.querySelector('#auth-reset-token-box').style.display = 'block';
+        overlay.querySelector('#auth-reset-step2').style.display = 'block';
+        overlay.querySelector('#auth-reset-token-input').value = r.token;
+        overlay.querySelector('#auth-reset-newpwd').focus();
+      } catch (err) {
+        resetError.textContent = err.message || 'Erro ao solicitar token.';
+        resetError.classList.add('show');
+      }
+    });
+
+    // Redefinir senha
+    resetForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      resetError.classList.remove('show');
+      resetSuccess.classList.remove('show');
+      const email = overlay.querySelector('#auth-reset-email').value;
+      const token = overlay.querySelector('#auth-reset-token-input').value;
+      const newPwd = overlay.querySelector('#auth-reset-newpwd').value;
+      const confirm = overlay.querySelector('#auth-reset-confirm').value;
+      if (newPwd !== confirm) {
+        resetError.textContent = 'As senhas não conferem.';
+        resetError.classList.add('show');
+        return;
+      }
+      try {
+        await resetPasswordWithToken({ email, token, newPassword: newPwd });
+        resetSuccess.textContent = 'Senha redefinida! Faça login com a nova senha.';
+        resetSuccess.classList.add('show');
+        setTimeout(() => {
+          overlay.querySelector('#auth-login-email').value = email.trim().toLowerCase();
+          overlay.querySelector('#auth-login-password').value = '';
+          showView('login');
+        }, 1200);
+      } catch (err) {
+        resetError.textContent = err.message || 'Erro ao redefinir senha.';
+        resetError.classList.add('show');
+      }
+    });
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1090,7 +1311,7 @@
                 <input type="email" id="admin-new-email" required />
               </div>
               <div>
-                <label for="admin-new-password">Senha (mín. 6)</label>
+                <label for="admin-new-password">Senha (mín. 8, com maiúsc., número e especial)</label>
                 <input type="password" id="admin-new-password" minlength="6" required />
               </div>
               <button type="submit" class="admin-btn primary">Criar</button>
@@ -1214,6 +1435,11 @@
     SUPER_ADMIN_EMAIL,
     SUPER_ADMIN_EMAILS,
     isSuperAdminEmail,
+    validatePasswordComplexity,
+    requestPasswordReset,
+    resetPasswordWithToken,
+    emergencyResetPassword,
+    bootstrapSuperAdmin,
     WHATSAPP_NUMBER,
     BUSINESS_HOURS,
   };
