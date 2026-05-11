@@ -282,6 +282,7 @@
     const user = users.find((u) => u.email === email);
     if (!user) throw new Error('Usuário não encontrado.');
     user.passwordHash = await hashPassword(newPassword);
+    delete user.needsPasswordSetup;
     saveUsers(users);
     localStorage.removeItem(STORAGE_RESET);
     return true;
@@ -295,6 +296,7 @@
     const user = users.find((u) => u.email === email);
     if (!user) throw new Error('Usuário não encontrado em ' + email + '.');
     user.passwordHash = await hashPassword(newPassword);
+    delete user.needsPasswordSetup;
     saveUsers(users);
     return true;
   }
@@ -339,19 +341,42 @@
     return !!getSession();
   }
 
-  function ensureSuperAdminPlaceholder() {
-    // Migração: promove para superadmin qualquer usuário já cadastrado cujo
-    // e-mail esteja em SUPER_ADMIN_EMAILS mas que ainda esteja como "user"
-    // (situação possível quando um e-mail é adicionado à lista depois do
-    // cadastro inicial).
+  function ensureSuperAdmins() {
+    // Roda em toda inicialização. Faz duas coisas:
+    //  1) Migra: usuários existentes em SUPER_ADMIN_EMAILS viram superadmin.
+    //  2) Semente: cria os super admins que ainda não existem com um
+    //     placeholder de senha inválido (precisará usar "Esqueci minha
+    //     senha" no modal para definir a senha real). O passwordHash começa
+    //     com "__SETUP__" — nenhum SHA-256 produz isso, então o login
+    //     com qualquer senha falhará até que o reset seja concluído.
     const users = getUsers();
     let changed = false;
+
+    // (1) Migração
     users.forEach((u) => {
       if (isSuperAdminEmail(u.email) && u.role !== 'superadmin') {
         u.role = 'superadmin';
         changed = true;
       }
     });
+
+    // (2) Semente
+    SUPER_ADMIN_EMAILS.forEach((email) => {
+      if (!users.some((u) => u.email === email)) {
+        const rand = (window.crypto && crypto.randomUUID && crypto.randomUUID()) ||
+                     (Math.random().toString(36) + '-' + Date.now());
+        users.push({
+          name: email.split('@')[0],
+          email,
+          passwordHash: '__SETUP__' + rand,
+          role: 'superadmin',
+          createdAt: Date.now(),
+          needsPasswordSetup: true,
+        });
+        changed = true;
+      }
+    });
+
     if (changed) {
       saveUsers(users);
       const session = getSession();
@@ -360,6 +385,14 @@
         setSession(session);
       }
     }
+  }
+  // Alias para compatibilidade com chamadas anteriores
+  const ensureSuperAdminPlaceholder = ensureSuperAdmins;
+
+  function pendingSetupEmails() {
+    return getUsers()
+      .filter((u) => u.needsPasswordSetup && isSuperAdminEmail(u.email))
+      .map((u) => u.email);
   }
 
   // ---------- UI: Modal de Login/Cadastro ----------
@@ -524,6 +557,24 @@
     }
     .auth-pwd-hint.ok { color: #6dd58c; }
     .auth-pwd-hint.bad { color: #ffb54a; }
+
+    /* Aviso de setup inicial de senha */
+    .auth-setup-notice {
+      display: none;
+      background: rgba(255,181,74,0.12);
+      border: 1px solid rgba(255,181,74,0.35);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #ffb54a;
+      font-size: 12px; line-height: 1.45;
+      margin-bottom: 14px;
+    }
+    .auth-setup-notice.show { display: block; }
+    .auth-setup-notice strong { color: #ffd28a; }
+    .auth-setup-notice .auth-setup-emails {
+      display: block; margin-top: 4px;
+      color: #fff; font-family: 'Courier New', monospace; font-size: 11px;
+    }
     .auth-submit {
       width: 100%; margin-top: 8px;
       padding: 11px 14px; border: none; border-radius: 8px;
@@ -845,6 +896,14 @@
           <button type="button" class="auth-tab" data-tab="schedule" role="tab">Agendar</button>
         </div>
 
+        <div class="auth-setup-notice" id="auth-setup-notice">
+          <strong>⚠ Defina a senha inicial dos super admins</strong><br/>
+          Os e-mails abaixo já estão cadastrados como super admin, mas ainda
+          não têm senha. Clique em <strong>Esqueci minha senha</strong>,
+          informe o e-mail e siga o fluxo para definir a senha.
+          <span class="auth-setup-emails" id="auth-setup-emails"></span>
+        </div>
+
         <form id="auth-form-login" novalidate>
           <div class="auth-field">
             <label for="auth-login-email">E-mail</label>
@@ -951,6 +1010,14 @@
     const tabs = overlay.querySelectorAll('.auth-tab');
     const loginForm = overlay.querySelector('#auth-form-login');
     const resetForm = overlay.querySelector('#auth-form-reset');
+
+    // Mostra aviso se algum super admin ainda está sem senha
+    const pendingEmails = pendingSetupEmails();
+    if (pendingEmails.length) {
+      const notice = overlay.querySelector('#auth-setup-notice');
+      overlay.querySelector('#auth-setup-emails').textContent = pendingEmails.join(' · ');
+      notice.classList.add('show');
+    }
     const scheduleForm = overlay.querySelector('#auth-form-schedule');
     const loginError = overlay.querySelector('#auth-login-error');
     const resetError = overlay.querySelector('#auth-reset-error');
@@ -1440,6 +1507,8 @@
     resetPasswordWithToken,
     emergencyResetPassword,
     bootstrapSuperAdmin,
+    ensureSuperAdmins,
+    pendingSetupEmails,
     WHATSAPP_NUMBER,
     BUSINESS_HOURS,
   };
