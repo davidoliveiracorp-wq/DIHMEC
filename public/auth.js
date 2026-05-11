@@ -953,14 +953,6 @@
           <button type="button" class="auth-tab" data-tab="schedule" role="tab">Agendar</button>
         </div>
 
-        <div class="auth-setup-notice" id="auth-setup-notice">
-          <strong>⚠ Defina a senha inicial dos super admins</strong><br/>
-          Os e-mails abaixo já estão cadastrados como super admin, mas ainda
-          não têm senha. Clique em <strong>Esqueci minha senha</strong>,
-          informe o e-mail e siga o fluxo para definir a senha.
-          <span class="auth-setup-emails" id="auth-setup-emails"></span>
-        </div>
-
         <form id="auth-form-login" novalidate>
           <div class="auth-field">
             <label for="auth-login-email">E-mail</label>
@@ -972,45 +964,6 @@
           </div>
           <button type="submit" class="auth-submit">Entrar</button>
           <div class="auth-error" id="auth-login-error"></div>
-          <button type="button" class="auth-link" id="auth-forgot-btn">Esqueci minha senha</button>
-        </form>
-
-        <form id="auth-form-reset" novalidate style="display:none">
-          <button type="button" class="auth-back" id="auth-reset-back">← Voltar ao login</button>
-          <h2 style="margin:6px 0 4px">Recuperar senha</h2>
-          <p class="auth-sub">Informe seu e-mail cadastrado e enviaremos um token para você redefinir a senha (válido por 15 min).</p>
-
-          <div class="auth-field">
-            <label for="auth-reset-email">E-mail cadastrado</label>
-            <input type="email" id="auth-reset-email" autocomplete="email" required />
-          </div>
-          <button type="button" class="auth-submit" id="auth-reset-request">Enviar token por e-mail</button>
-
-          <div class="auth-token-box" id="auth-reset-token-box" style="display:none">
-            Seu token de redefinição:
-            <strong id="auth-reset-token-value">------</strong>
-            <small id="auth-reset-token-note">Como o site é estático, o token é exibido aqui. Para receber por e-mail, integre EmailJS (peça que eu plugo).</small>
-          </div>
-
-          <div id="auth-reset-step2" style="display:none">
-            <div class="auth-field" style="margin-top:14px">
-              <label for="auth-reset-token-input">Token recebido</label>
-              <input type="text" id="auth-reset-token-input" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
-            </div>
-            <div class="auth-field">
-              <label for="auth-reset-newpwd">Nova senha</label>
-              <input type="password" id="auth-reset-newpwd" autocomplete="new-password" />
-              <p class="auth-pwd-hint">Mín. 8 caracteres · letra maiúscula · número · caractere especial (! @ # $ % * ?)</p>
-            </div>
-            <div class="auth-field">
-              <label for="auth-reset-confirm">Confirmar nova senha</label>
-              <input type="password" id="auth-reset-confirm" autocomplete="new-password" />
-            </div>
-            <button type="submit" class="auth-submit">Redefinir senha</button>
-          </div>
-
-          <div class="auth-error" id="auth-reset-error"></div>
-          <div class="auth-success" id="auth-reset-success"></div>
         </form>
 
         <form id="auth-form-schedule" novalidate style="display:none">
@@ -1066,19 +1019,8 @@
     const card = overlay.querySelector('.auth-card');
     const tabs = overlay.querySelectorAll('.auth-tab');
     const loginForm = overlay.querySelector('#auth-form-login');
-    const resetForm = overlay.querySelector('#auth-form-reset');
-
-    // Mostra aviso se algum super admin ainda está sem senha
-    const pendingEmails = pendingSetupEmails();
-    if (pendingEmails.length) {
-      const notice = overlay.querySelector('#auth-setup-notice');
-      overlay.querySelector('#auth-setup-emails').textContent = pendingEmails.join(' · ');
-      notice.classList.add('show');
-    }
     const scheduleForm = overlay.querySelector('#auth-form-schedule');
     const loginError = overlay.querySelector('#auth-login-error');
-    const resetError = overlay.querySelector('#auth-reset-error');
-    const resetSuccess = overlay.querySelector('#auth-reset-success');
     const schedError = overlay.querySelector('#auth-sched-error');
     const schedSuccess = overlay.querySelector('#auth-sched-success');
     const slotsContainer = overlay.querySelector('#sched-slots');
@@ -1146,102 +1088,16 @@
     function showView(which) {
       tabs.forEach((x) => x.classList.toggle('active', x.getAttribute('data-tab') === which));
       loginForm.style.display    = which === 'login'    ? '' : 'none';
-      resetForm.style.display    = which === 'reset'    ? '' : 'none';
       scheduleForm.style.display = which === 'schedule' ? '' : 'none';
       card.classList.toggle('wide', which === 'schedule');
       if (which === 'schedule') renderSlotsForDate(dateInput.value);
       loginError.classList.remove('show');
-      resetError.classList.remove('show');
-      resetSuccess.classList.remove('show');
       schedError.classList.remove('show');
       schedSuccess.classList.remove('show');
     }
     tabs.forEach((t) =>
       t.addEventListener('click', () => showView(t.getAttribute('data-tab')))
     );
-
-    // Esqueci minha senha
-    overlay.querySelector('#auth-forgot-btn').addEventListener('click', () => {
-      overlay.querySelector('#auth-reset-token-box').style.display = 'none';
-      overlay.querySelector('#auth-reset-step2').style.display = 'none';
-      overlay.querySelector('#auth-reset-email').value =
-        overlay.querySelector('#auth-login-email').value || '';
-      showView('reset');
-    });
-    overlay.querySelector('#auth-reset-back').addEventListener('click', () => {
-      showView('login');
-    });
-
-    // Solicitar token
-    overlay.querySelector('#auth-reset-request').addEventListener('click', async () => {
-      resetError.classList.remove('show');
-      resetSuccess.classList.remove('show');
-      const email = overlay.querySelector('#auth-reset-email').value;
-      const btn = overlay.querySelector('#auth-reset-request');
-      btn.disabled = true;
-      btn.textContent = 'Enviando…';
-      try {
-        const r = await requestPasswordReset(email);
-        const tokenBox = overlay.querySelector('#auth-reset-token-box');
-        const tokenValue = overlay.querySelector('#auth-reset-token-value');
-        const tokenNote = overlay.querySelector('#auth-reset-token-note');
-        if (r.sentViaEmail) {
-          // Token foi enviado por e-mail: NÃO exibe na tela
-          tokenValue.textContent = '••••••';
-          tokenValue.style.color = '#6dd58c';
-          tokenNote.innerHTML =
-            '📧 <strong>Token enviado para ' + escapeHtml(r.email) + '</strong>.<br/>' +
-            'Verifique a caixa de entrada (e o spam). Válido por 15 min.';
-          overlay.querySelector('#auth-reset-token-input').value = '';
-        } else {
-          // Fallback: exibe token na tela
-          tokenValue.textContent = r.token;
-          tokenValue.style.color = '#ffb54a';
-          tokenNote.textContent =
-            'EmailJS não está configurado, por isso o token aparece aqui. ' +
-            'Para receber por e-mail, configure as chaves em window.DIHMEC_EMAILJS.';
-          overlay.querySelector('#auth-reset-token-input').value = r.token;
-        }
-        tokenBox.style.display = 'block';
-        overlay.querySelector('#auth-reset-step2').style.display = 'block';
-        overlay.querySelector('#auth-reset-token-input').focus();
-      } catch (err) {
-        resetError.textContent = err.message || 'Erro ao solicitar token.';
-        resetError.classList.add('show');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Gerar token';
-      }
-    });
-
-    // Redefinir senha
-    resetForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      resetError.classList.remove('show');
-      resetSuccess.classList.remove('show');
-      const email = overlay.querySelector('#auth-reset-email').value;
-      const token = overlay.querySelector('#auth-reset-token-input').value;
-      const newPwd = overlay.querySelector('#auth-reset-newpwd').value;
-      const confirm = overlay.querySelector('#auth-reset-confirm').value;
-      if (newPwd !== confirm) {
-        resetError.textContent = 'As senhas não conferem.';
-        resetError.classList.add('show');
-        return;
-      }
-      try {
-        await resetPasswordWithToken({ email, token, newPassword: newPwd });
-        resetSuccess.textContent = 'Senha redefinida! Faça login com a nova senha.';
-        resetSuccess.classList.add('show');
-        setTimeout(() => {
-          overlay.querySelector('#auth-login-email').value = email.trim().toLowerCase();
-          overlay.querySelector('#auth-login-password').value = '';
-          showView('login');
-        }, 1200);
-      } catch (err) {
-        resetError.textContent = err.message || 'Erro ao redefinir senha.';
-        resetError.classList.add('show');
-      }
-    });
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
