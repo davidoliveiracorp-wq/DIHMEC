@@ -13,6 +13,55 @@
   const STORAGE_RESET = 'dihmec_reset_token';
   const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutos
 
+  // ----------------------------------------------------------------
+  // Integração com EmailJS (envio do token para o e-mail cadastrado).
+  // Como o site é estático, usamos o EmailJS (https://www.emailjs.com)
+  // que envia e-mails direto do navegador. Para ligar:
+  //   1) Criar conta gratuita em emailjs.com (200 e-mails/mês de graça)
+  //   2) Adicionar um "Email Service" (Gmail, Outlook, etc.)
+  //   3) Criar um "Email Template" com as variáveis {{to_email}},
+  //      {{token}} e {{expires_minutes}} no corpo
+  //   4) Substituir os valores abaixo pelos seus
+  // Enquanto vazio, o token continua aparecendo na tela como fallback.
+  window.DIHMEC_EMAILJS = window.DIHMEC_EMAILJS || {
+    serviceId: '',
+    templateId: '',
+    publicKey: '',
+  };
+
+  let _emailjsLoading = null;
+  function loadEmailJS() {
+    if (window.emailjs) return Promise.resolve(window.emailjs);
+    const cfg = window.DIHMEC_EMAILJS || {};
+    if (!cfg.serviceId || !cfg.templateId || !cfg.publicKey) return Promise.resolve(null);
+    if (_emailjsLoading) return _emailjsLoading;
+    _emailjsLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+      s.onload = () => {
+        try { window.emailjs.init({ publicKey: cfg.publicKey }); } catch (e) {}
+        resolve(window.emailjs);
+      };
+      s.onerror = () => reject(new Error('Falha ao carregar EmailJS SDK'));
+      document.head.appendChild(s);
+    });
+    return _emailjsLoading;
+  }
+
+  async function sendResetEmailViaEmailJS({ email, token, expiresAt }) {
+    const cfg = window.DIHMEC_EMAILJS || {};
+    if (!cfg.serviceId || !cfg.templateId || !cfg.publicKey) return false;
+    const lib = await loadEmailJS();
+    if (!lib) return false;
+    const expiresMinutes = Math.max(1, Math.round((expiresAt - Date.now()) / 60000));
+    await lib.send(cfg.serviceId, cfg.templateId, {
+      to_email: email,
+      token,
+      expires_minutes: expiresMinutes,
+    });
+    return true;
+  }
+
   // Política de complexidade de senha
   function validatePasswordComplexity(password) {
     const p = String(password || '');
@@ -246,7 +295,7 @@
   }
 
   // ---------- Reset de senha ----------
-  function requestPasswordReset(email) {
+  async function requestPasswordReset(email) {
     email = (email || '').trim().toLowerCase();
     if (!email) throw new Error('Informe o e-mail.');
     const users = getUsers();
@@ -256,13 +305,21 @@
     const token = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = Date.now() + RESET_TOKEN_TTL_MS;
     localStorage.setItem(STORAGE_RESET, JSON.stringify({ email, token, expiresAt }));
-    // Hook para envio real por e-mail (EmailJS, backend etc.). Se a integração
-    // não estiver configurada, o caller exibe o token na tela.
+
+    // Tenta envio real via EmailJS. Falha silenciosa cai no fallback
+    // (exibição do token na tela).
+    let sentViaEmail = false;
+    try {
+      sentViaEmail = await sendResetEmailViaEmailJS({ email, token, expiresAt });
+    } catch (e) {
+      console.warn('[DIHMECAuth] Falha ao enviar e-mail via EmailJS:', e);
+    }
+    // Hook adicional p/ integrações customizadas (backend próprio etc.)
     if (typeof window.DIHMEC_SEND_RESET_EMAIL === 'function') {
       try { window.DIHMEC_SEND_RESET_EMAIL({ email, token, expiresAt }); }
-      catch (e) { console.warn('[DIHMECAuth] Falha ao enviar e-mail:', e); }
+      catch (e) { console.warn('[DIHMECAuth] Falha no hook DIHMEC_SEND_RESET_EMAIL:', e); }
     }
-    return { email, token, expiresAt };
+    return { email, token, expiresAt, sentViaEmail };
   }
 
   async function resetPasswordWithToken({ email, token, newPassword }) {
@@ -921,13 +978,13 @@
         <form id="auth-form-reset" novalidate style="display:none">
           <button type="button" class="auth-back" id="auth-reset-back">← Voltar ao login</button>
           <h2 style="margin:6px 0 4px">Recuperar senha</h2>
-          <p class="auth-sub">Informe seu e-mail cadastrado para gerar um token de redefinição (válido por 15 min).</p>
+          <p class="auth-sub">Informe seu e-mail cadastrado e enviaremos um token para você redefinir a senha (válido por 15 min).</p>
 
           <div class="auth-field">
             <label for="auth-reset-email">E-mail cadastrado</label>
             <input type="email" id="auth-reset-email" autocomplete="email" required />
           </div>
-          <button type="button" class="auth-submit" id="auth-reset-request">Gerar token</button>
+          <button type="button" class="auth-submit" id="auth-reset-request">Enviar token por e-mail</button>
 
           <div class="auth-token-box" id="auth-reset-token-box" style="display:none">
             Seu token de redefinição:
@@ -1116,20 +1173,44 @@
     });
 
     // Solicitar token
-    overlay.querySelector('#auth-reset-request').addEventListener('click', () => {
+    overlay.querySelector('#auth-reset-request').addEventListener('click', async () => {
       resetError.classList.remove('show');
       resetSuccess.classList.remove('show');
       const email = overlay.querySelector('#auth-reset-email').value;
+      const btn = overlay.querySelector('#auth-reset-request');
+      btn.disabled = true;
+      btn.textContent = 'Enviando…';
       try {
-        const r = requestPasswordReset(email);
-        overlay.querySelector('#auth-reset-token-value').textContent = r.token;
-        overlay.querySelector('#auth-reset-token-box').style.display = 'block';
+        const r = await requestPasswordReset(email);
+        const tokenBox = overlay.querySelector('#auth-reset-token-box');
+        const tokenValue = overlay.querySelector('#auth-reset-token-value');
+        const tokenNote = overlay.querySelector('#auth-reset-token-note');
+        if (r.sentViaEmail) {
+          // Token foi enviado por e-mail: NÃO exibe na tela
+          tokenValue.textContent = '••••••';
+          tokenValue.style.color = '#6dd58c';
+          tokenNote.innerHTML =
+            '📧 <strong>Token enviado para ' + escapeHtml(r.email) + '</strong>.<br/>' +
+            'Verifique a caixa de entrada (e o spam). Válido por 15 min.';
+          overlay.querySelector('#auth-reset-token-input').value = '';
+        } else {
+          // Fallback: exibe token na tela
+          tokenValue.textContent = r.token;
+          tokenValue.style.color = '#ffb54a';
+          tokenNote.textContent =
+            'EmailJS não está configurado, por isso o token aparece aqui. ' +
+            'Para receber por e-mail, configure as chaves em window.DIHMEC_EMAILJS.';
+          overlay.querySelector('#auth-reset-token-input').value = r.token;
+        }
+        tokenBox.style.display = 'block';
         overlay.querySelector('#auth-reset-step2').style.display = 'block';
-        overlay.querySelector('#auth-reset-token-input').value = r.token;
-        overlay.querySelector('#auth-reset-newpwd').focus();
+        overlay.querySelector('#auth-reset-token-input').focus();
       } catch (err) {
         resetError.textContent = err.message || 'Erro ao solicitar token.';
         resetError.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Gerar token';
       }
     });
 
@@ -1509,6 +1590,8 @@
     bootstrapSuperAdmin,
     ensureSuperAdmins,
     pendingSetupEmails,
+    sendResetEmailViaEmailJS,
+    loadEmailJS,
     WHATSAPP_NUMBER,
     BUSINESS_HOURS,
   };
