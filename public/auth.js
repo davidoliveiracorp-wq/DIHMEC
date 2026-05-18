@@ -13,6 +13,39 @@
   const STORAGE_RESET = 'dihmec_reset_token';
   const RESET_TOKEN_TTL_MS = 15 * 60 * 1000; // 15 minutos
 
+  // ---------- HTTP helper ----------
+  // Toda comunicacao com o backend (/api/*) passa por aqui. Anexa o
+  // Bearer token (lido da sessao em localStorage), faz o parse de JSON
+  // e converte erros HTTP em Error legivel.
+  async function apiFetch(path, options = {}) {
+    const opts = Object.assign({ method: 'GET' }, options);
+    opts.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+    try {
+      const s = JSON.parse(localStorage.getItem(STORAGE_SESSION) || 'null');
+      if (s && s.token) opts.headers['Authorization'] = 'Bearer ' + s.token;
+    } catch (e) {}
+    if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+    const r = await fetch(path, opts);
+    let data = null;
+    try { data = await r.json(); } catch (e) { data = null; }
+    if (!r.ok) {
+      const msg = (data && data.error) || ('HTTP ' + r.status);
+      const err = new Error(msg);
+      err.status = r.status;
+      throw err;
+    }
+    return data;
+  }
+
+  function syncReady() {
+    return (window.DIHMECSync && window.DIHMECSync.ready) || Promise.resolve();
+  }
+  async function syncPull() {
+    if (window.DIHMECSync && window.DIHMECSync.pull) {
+      try { await window.DIHMECSync.pull(); } catch (e) {}
+    }
+  }
+
   // ----------------------------------------------------------------
   // Integração com EmailJS (envio do token para o e-mail cadastrado).
   // Como o site é estático, usamos o EmailJS (https://www.emailjs.com)
@@ -139,13 +172,22 @@
     if (Array.isArray(perms[email])) return perms[email];
     return DEFAULT_USER_PERMISSIONS.slice();
   }
-  function setUserPermissions(email, list) {
+  // Persiste a permissao no servidor (requer superadmin). O cliente
+  // tambem atualiza o cache local imediatamente para a UI nao "piscar".
+  async function setUserPermissions(email, list) {
     email = (email || '').toLowerCase();
-    const perms = getPermissions();
     const set = new Set(Array.isArray(list) ? list : []);
     set.add('cadastro-cliente');
-    perms[email] = Array.from(set);
-    savePermissions(perms);
+    const menus = Array.from(set);
+    // Otimismo local — refletira no DOM antes do retorno da API.
+    const perms = getPermissions();
+    perms[email] = menus;
+    try { localStorage.setItem(STORAGE_PERMISSIONS, JSON.stringify(perms)); } catch (e) {}
+    await apiFetch('/api/permissions', {
+      method: 'PUT',
+      body: { email, menus },
+    });
+    await syncPull();
   }
   function hasPermission(menuId, session) {
     session = session || getSession();
@@ -270,56 +312,49 @@
     }));
   }
 
+  // Cadastra um novo usuario via /api/register (apenas super admin).
+  // Apos o sucesso, dispara um pull para atualizar o cache local com
+  // o usuario recem-criado.
   async function register({ name, email, password }) {
     name = (name || '').trim();
     email = (email || '').trim().toLowerCase();
     if (!name || !email || !password) throw new Error('Preencha todos os campos.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('E-mail inválido.');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('E-mail invalido.');
     validatePasswordComplexity(password);
-    const users = getUsers();
-    if (users.some((u) => u.email === email)) throw new Error('E-mail já cadastrado.');
-    const role = isSuperAdminEmail(email) ? 'superadmin' : 'user';
     const passwordHash = await hashPassword(password);
-    const user = { name, email, passwordHash, role, createdAt: Date.now() };
-    users.push(user);
-    saveUsers(users);
-    // Permissões padrão para usuários comuns: Cadastro de Cliente, Checklist e Nova OS.
-    if (role !== 'superadmin') {
-      const perms = getPermissions();
-      if (!perms[email]) {
-        perms[email] = DEFAULT_USER_PERMISSIONS.slice();
-        savePermissions(perms);
-      }
-    }
-    return { name: user.name, email: user.email, role: user.role };
+    const data = await apiFetch('/api/register', {
+      method: 'POST',
+      body: { name, email, passwordHash },
+    });
+    await syncPull();
+    return data;
   }
 
   // ---------- Reset de senha ----------
+  // O servidor gera/valida o token. O cliente continua responsavel
+  // por disparar o e-mail (via EmailJS) e por receber o token informado
+  // pelo usuario. Util via console caso alguem precise reativar a UI de
+  // recuperacao de senha no futuro.
   async function requestPasswordReset(email) {
     email = (email || '').trim().toLowerCase();
     if (!email) throw new Error('Informe o e-mail.');
-    const users = getUsers();
-    const user = users.find((u) => u.email === email);
-    if (!user) throw new Error('E-mail não cadastrado.');
-    // Gera token de 6 dígitos
-    const token = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = Date.now() + RESET_TOKEN_TTL_MS;
-    localStorage.setItem(STORAGE_RESET, JSON.stringify({ email, token, expiresAt }));
-
-    // Tenta envio real via EmailJS. Falha silenciosa cai no fallback
-    // (exibição do token na tela).
+    const data = await apiFetch('/api/reset-request', {
+      method: 'POST',
+      body: { email },
+    });
     let sentViaEmail = false;
     try {
-      sentViaEmail = await sendResetEmailViaEmailJS({ email, token, expiresAt });
+      sentViaEmail = await sendResetEmailViaEmailJS({
+        email: data.email, token: data.token, expiresAt: data.expiresAt,
+      });
     } catch (e) {
       console.warn('[DIHMECAuth] Falha ao enviar e-mail via EmailJS:', e);
     }
-    // Hook adicional p/ integrações customizadas (backend próprio etc.)
     if (typeof window.DIHMEC_SEND_RESET_EMAIL === 'function') {
-      try { window.DIHMEC_SEND_RESET_EMAIL({ email, token, expiresAt }); }
+      try { window.DIHMEC_SEND_RESET_EMAIL(data); }
       catch (e) { console.warn('[DIHMECAuth] Falha no hook DIHMEC_SEND_RESET_EMAIL:', e); }
     }
-    return { email, token, expiresAt, sentViaEmail };
+    return Object.assign({}, data, { sentViaEmail });
   }
 
   async function resetPasswordWithToken({ email, token, newPassword }) {
@@ -327,69 +362,62 @@
     token = String(token || '').trim();
     if (!email || !token) throw new Error('Informe e-mail e token.');
     validatePasswordComplexity(newPassword);
-    const data = JSON.parse(localStorage.getItem(STORAGE_RESET) || 'null');
-    if (!data) throw new Error('Nenhuma solicitação de reset ativa. Solicite um novo token.');
-    if (Date.now() > data.expiresAt) {
-      localStorage.removeItem(STORAGE_RESET);
-      throw new Error('Token expirado. Solicite um novo.');
-    }
-    if (data.email !== email) throw new Error('E-mail não confere com a solicitação.');
-    if (data.token !== token) throw new Error('Token inválido.');
-    const users = getUsers();
-    const user = users.find((u) => u.email === email);
-    if (!user) throw new Error('Usuário não encontrado.');
-    user.passwordHash = await hashPassword(newPassword);
-    delete user.needsPasswordSetup;
-    saveUsers(users);
-    localStorage.removeItem(STORAGE_RESET);
+    const passwordHash = await hashPassword(newPassword);
+    await apiFetch('/api/reset-confirm', {
+      method: 'POST',
+      body: { email, token, passwordHash },
+    });
     return true;
   }
 
-  // ---------- Console helpers de emergência ----------
+  // ---------- Console helpers de emergencia ----------
+  // Sem efeito local — agora a fonte da verdade eh o servidor. Mantemos
+  // a funcao exposta para nao quebrar integracoes antigas: ela apenas
+  // dispara um reset request no backend.
   async function emergencyResetPassword(email, newPassword) {
     email = String(email || '').trim().toLowerCase();
     validatePasswordComplexity(newPassword);
-    const users = getUsers();
-    const user = users.find((u) => u.email === email);
-    if (!user) throw new Error('Usuário não encontrado em ' + email + '.');
-    user.passwordHash = await hashPassword(newPassword);
-    delete user.needsPasswordSetup;
-    saveUsers(users);
-    return true;
+    const { token } = await apiFetch('/api/reset-request', {
+      method: 'POST', body: { email },
+    });
+    return resetPasswordWithToken({ email, token, newPassword });
   }
 
-  async function bootstrapSuperAdmin(email, password, name) {
+  async function bootstrapSuperAdmin(email/* , password, name */) {
     email = String(email || '').trim().toLowerCase();
     if (!isSuperAdminEmail(email))
-      throw new Error('E-mail ' + email + ' não está na lista de super admins.');
-    validatePasswordComplexity(password);
-    const users = getUsers().filter((u) => u.email !== email);
-    const passwordHash = await hashPassword(password);
-    users.push({
-      name: (name || email.split('@')[0]).trim(),
-      email,
-      passwordHash,
-      role: 'superadmin',
-      createdAt: Date.now(),
-    });
-    saveUsers(users);
+      throw new Error('E-mail ' + email + ' nao esta na lista de super admins.');
+    // O servidor ja semeia os super admins com a senha padrao
+    // (lib/db.js#DEFAULT_SUPER_ADMIN_PASSWORD). Esta funcao virou
+    // apenas um stub para compatibilidade com chamadas antigas.
     return true;
   }
 
   async function login({ email, password }) {
     email = (email || '').trim().toLowerCase();
     if (!email || !password) throw new Error('Informe e-mail e senha.');
-    const users = getUsers();
-    const user = users.find((u) => u.email === email);
-    if (!user) throw new Error('E-mail não encontrado.');
     const passwordHash = await hashPassword(password);
-    if (user.passwordHash !== passwordHash) throw new Error('Senha incorreta.');
-    const session = { name: user.name, email: user.email, role: user.role, ts: Date.now() };
+    const data = await apiFetch('/api/login', {
+      method: 'POST',
+      body: { email, passwordHash },
+    });
+    const session = {
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      token: data.token,
+      expiresAt: data.expiresAt,
+      ts: Date.now(),
+    };
     setSession(session);
+    // Apos logar, puxa o estado completo do servidor para esta maquina.
+    await syncPull();
     return session;
   }
 
-  function logout() {
+  async function logout() {
+    try { await apiFetch('/api/logout', { method: 'POST' }); }
+    catch (e) { /* segue mesmo se a invalidacao do token falhar */ }
     clearSession();
     window.location.href = '/index.html';
   }
@@ -398,52 +426,18 @@
     return !!getSession();
   }
 
+  // O servidor (lib/db.js#ensureSuperAdmins) eh quem semeia/promove os
+  // super admins de forma idempotente em toda inicializacao do schema.
+  // Aqui mantemos um stub para nao quebrar chamadas antigas e — por
+  // garantia — corrigimos o cache local caso ele tenha entrado em
+  // inconsistencia (ex.: dado antigo de localStorage).
   function ensureSuperAdmins() {
-    // Roda em toda inicialização. Faz duas coisas:
-    //  1) Migra: usuários existentes em SUPER_ADMIN_EMAILS viram superadmin.
-    //  2) Semente: cria os super admins que ainda não existem com um
-    //     placeholder de senha inválido (precisará usar "Esqueci minha
-    //     senha" no modal para definir a senha real). O passwordHash começa
-    //     com "__SETUP__" — nenhum SHA-256 produz isso, então o login
-    //     com qualquer senha falhará até que o reset seja concluído.
-    const users = getUsers();
-    let changed = false;
-
-    // (1) Migração
-    users.forEach((u) => {
-      if (isSuperAdminEmail(u.email) && u.role !== 'superadmin') {
-        u.role = 'superadmin';
-        changed = true;
-      }
-    });
-
-    // (2) Semente
-    SUPER_ADMIN_EMAILS.forEach((email) => {
-      if (!users.some((u) => u.email === email)) {
-        const rand = (window.crypto && crypto.randomUUID && crypto.randomUUID()) ||
-                     (Math.random().toString(36) + '-' + Date.now());
-        users.push({
-          name: email.split('@')[0],
-          email,
-          passwordHash: '__SETUP__' + rand,
-          role: 'superadmin',
-          createdAt: Date.now(),
-          needsPasswordSetup: true,
-        });
-        changed = true;
-      }
-    });
-
-    if (changed) {
-      saveUsers(users);
-      const session = getSession();
-      if (session && isSuperAdminEmail(session.email) && session.role !== 'superadmin') {
-        session.role = 'superadmin';
-        setSession(session);
-      }
+    const session = getSession();
+    if (session && isSuperAdminEmail(session.email) && session.role !== 'superadmin') {
+      session.role = 'superadmin';
+      try { localStorage.setItem(STORAGE_SESSION, JSON.stringify(session)); } catch (e) {}
     }
   }
-  // Alias para compatibilidade com chamadas anteriores
   const ensureSuperAdminPlaceholder = ensureSuperAdmins;
 
   function pendingSetupEmails() {
@@ -1035,6 +1029,21 @@
     dateInput.min = todayStr;
     dateInput.value = todayStr;
 
+    // Cache dos slots ja ocupados, obtido via /api/appointments (publico).
+    // Eh atualizado ao abrir a aba "Agendar" e apos cada submit bem-sucedido.
+    let bookedSlots = []; // [{date, time}]
+    function slotIsBooked(date, time) {
+      return bookedSlots.some((s) => s.date === date && s.time === time);
+    }
+    async function refreshBookedSlots() {
+      try {
+        const r = await fetch('/api/appointments');
+        if (!r.ok) return;
+        const data = await r.json();
+        bookedSlots = Array.isArray(data.slots) ? data.slots : [];
+      } catch (e) { /* offline — segue sem dados de slots */ }
+    }
+
     function renderSlotsForDate(date) {
       const slots = generateTimeSlots();
       const selected = slotsContainer.dataset.selected || '';
@@ -1044,7 +1053,7 @@
         return;
       }
       slots.forEach((time) => {
-        const booked = isSlotBooked(date, time);
+        const booked = slotIsBooked(date, time);
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'sched-slot' +
@@ -1085,12 +1094,15 @@
     plateInput.addEventListener('input', updatePlateStatus);
     plateInput.addEventListener('blur', updatePlateStatus);
 
-    function showView(which) {
+    async function showView(which) {
       tabs.forEach((x) => x.classList.toggle('active', x.getAttribute('data-tab') === which));
       loginForm.style.display    = which === 'login'    ? '' : 'none';
       scheduleForm.style.display = which === 'schedule' ? '' : 'none';
       card.classList.toggle('wide', which === 'schedule');
-      if (which === 'schedule') renderSlotsForDate(dateInput.value);
+      if (which === 'schedule') {
+        await refreshBookedSlots();
+        renderSlotsForDate(dateInput.value);
+      }
       loginError.classList.remove('show');
       schedError.classList.remove('show');
       schedSuccess.classList.remove('show');
@@ -1121,7 +1133,7 @@
     // Cadastro publico desativado: apenas o super admin cria usuarios via
     // o painel de Administracao (botao "Criar usuario").
 
-    scheduleForm.addEventListener('submit', (e) => {
+    scheduleForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       schedError.classList.remove('show');
       schedSuccess.classList.remove('show');
@@ -1139,7 +1151,7 @@
         return;
       }
       if (!time) {
-        schedError.textContent = 'Escolha um horário disponível.';
+        schedError.textContent = 'Escolha um horario disponivel.';
         schedError.classList.add('show');
         return;
       }
@@ -1149,47 +1161,46 @@
         return;
       }
 
-      const list = getAppointments();
-      if (list.some((a) => a.date === date && a.time === time)) {
-        schedError.textContent = 'Este horário acabou de ser ocupado. Escolha outro.';
-        schedError.classList.add('show');
-        slotsContainer.dataset.selected = '';
-        renderSlotsForDate(date);
-        return;
-      }
-
-      // Se a placa nao estiver cadastrada, registra cliente + veiculo junto
-      let cadastradoAgora = false;
-      if (!isPlateRegistered(plate)) {
-        const ok = window.confirm(
-          'A placa ' + plate + ' não está cadastrada.\n\n' +
-          'Deseja prosseguir e cadastrá-la junto com o agendamento?'
-        );
-        if (!ok) {
-          schedError.textContent = 'Agendamento cancelado: cadastre a placa antes de continuar.';
+      const submitBtn = scheduleForm.querySelector('button[type=submit]');
+      submitBtn.disabled = true;
+      try {
+        const r = await fetch('/api/appointments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, plate, vehicle, description, date, time }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          if (r.status === 409) {
+            schedError.textContent = 'Este horario acabou de ser ocupado. Escolha outro.';
+            await refreshBookedSlots();
+            slotsContainer.dataset.selected = '';
+            renderSlotsForDate(date);
+          } else {
+            schedError.textContent = data.error || 'Erro ao registrar agendamento.';
+          }
           schedError.classList.add('show');
           return;
         }
-        registerVehicleFromSchedule({ name, phone, plate, vehicle });
-        cadastradoAgora = true;
+        const cadastradoAgora = !!data.registered;
+        const message = buildWhatsAppMessage(data.appointment || { name, phone, plate, vehicle, description, date, time });
+        const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
+        window.open(url, '_blank', 'noopener');
+        schedSuccess.textContent = cadastradoAgora
+          ? 'Veiculo cadastrado e agendamento registrado! Confirme o envio no WhatsApp.'
+          : 'Agendamento registrado! Confirme o envio no WhatsApp.';
+        schedSuccess.classList.add('show');
+        scheduleForm.reset();
+        dateInput.value = todayStr;
+        slotsContainer.dataset.selected = '';
+        await refreshBookedSlots();
+        renderSlotsForDate(todayStr);
+      } catch (err) {
+        schedError.textContent = err.message || 'Erro de rede ao registrar agendamento.';
+        schedError.classList.add('show');
+      } finally {
+        submitBtn.disabled = false;
       }
-
-      const appointment = { name, phone, plate, vehicle, description, date, time, ts: Date.now() };
-      list.push(appointment);
-      saveAppointments(list);
-
-      const message = buildWhatsAppMessage(appointment);
-      const url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(message);
-      window.open(url, '_blank', 'noopener');
-
-      schedSuccess.textContent = cadastradoAgora
-        ? 'Veículo cadastrado e agendamento registrado! Confirme o envio no WhatsApp.'
-        : 'Agendamento registrado! Confirme o envio no WhatsApp.';
-      schedSuccess.classList.add('show');
-      scheduleForm.reset();
-      dateInput.value = todayStr;
-      slotsContainer.dataset.selected = '';
-      renderSlotsForDate(todayStr);
     });
   }
 
@@ -1379,7 +1390,9 @@
       }
     });
 
-    overlay.querySelector('#admin-save-btn').addEventListener('click', () => {
+    overlay.querySelector('#admin-save-btn').addEventListener('click', async () => {
+      const saveBtn = overlay.querySelector('#admin-save-btn');
+      saveBtn.disabled = true;
       const checks = overlay.querySelectorAll('input[type=checkbox][data-email]');
       const byEmail = {};
       checks.forEach((c) => {
@@ -1389,23 +1402,34 @@
         if (!byEmail[em]) byEmail[em] = [];
         if (c.checked) byEmail[em].push(m);
       });
-      Object.keys(byEmail).forEach((em) => setUserPermissions(em, byEmail[em]));
       const status = overlay.querySelector('#admin-status');
+      try {
+        await Promise.all(Object.keys(byEmail).map((em) => setUserPermissions(em, byEmail[em])));
+        status.textContent = 'Permissoes salvas.';
+        status.style.color = '';
+      } catch (err) {
+        status.textContent = err.message || 'Falha ao salvar permissoes.';
+        status.style.color = '#b3261e';
+      }
       status.classList.add('show');
-      setTimeout(() => status.classList.remove('show'), 1800);
+      setTimeout(() => status.classList.remove('show'), 2400);
       // Reaplicar no menu lateral imediatamente (caso o admin tenha mudado a si mesmo)
       applyMenuPermissions();
+      saveBtn.disabled = false;
     });
   }
 
-  function requireAuth() {
+  async function requireAuth() {
     injectStyle();
+    // Antes de qualquer leitura de dados, espera o pull inicial do
+    // servidor para que o cache local esteja consistente.
+    try { await syncReady(); } catch (e) {}
     ensureSuperAdminPlaceholder();
     if (isLoggedIn()) {
       renderUserBar();
       applyMenuPermissions();
       enforcePagePermission();
-      return Promise.resolve(getSession());
+      return getSession();
     }
     return new Promise((resolve) => {
       renderModal(() => {

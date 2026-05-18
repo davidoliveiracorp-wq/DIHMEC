@@ -278,12 +278,28 @@
       Object.values(KEYS).forEach((k) => localStorage.removeItem(k));
       window.location.reload();
     },
+    // Re-aplica todos os tbodies a partir do localStorage. Usado por
+    // auth.js apos o pull pos-login para atualizar a UI imediatamente.
+    restoreAll() { restoreAll(); recomputeTotals(); },
   };
 
-  // Restaura imediatamente (antes do DOMContentLoaded de outros scripts) e
-  // novamente em DOMContentLoaded para garantir que o conteúdo persistido
-  // não seja sobrescrito por scripts que rodem depois.
-  function init() {
+  // Quando DIHMECSync termina o pull do servidor, dispara um evento
+  // 'dihmec:synced' — re-aplicamos restoreAll para refletir os dados
+  // recem-baixados nas tabelas que ja foram montadas.
+  window.addEventListener('dihmec:synced', () => {
+    try { restoreAll(); recomputeTotals(); }
+    catch (e) { console.warn('[DIHMECStore] re-restore falhou', e); }
+  });
+
+  // Inicializa apos:
+  //   1) DOM estar pronto (DOMContentLoaded)
+  //   2) DIHMECSync.ready ter resolvido (para que o localStorage ja
+  //      esteja preenchido com os dados frescos do servidor antes do
+  //      restoreAll inicial)
+  async function init() {
+    if (window.DIHMECSync && window.DIHMECSync.ready) {
+      try { await window.DIHMECSync.ready; } catch (e) {}
+    }
     restoreAll();
     watchAll();
     attachProductForm();
