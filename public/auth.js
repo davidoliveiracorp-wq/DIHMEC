@@ -370,6 +370,31 @@
     return true;
   }
 
+  // ---------- Alterar senha (usuario logado) ----------
+  // Dois fluxos:
+  //   * Propria senha: precisa de oldPassword + newPassword. Qualquer
+  //     usuario logado pode.
+  //   * Senha de outro usuario: precisa apenas de newPassword. So super
+  //     admin pode (validado no servidor).
+  async function changePassword({ targetEmail, oldPassword, newPassword }) {
+    const session = getSession();
+    if (!session) throw new Error('Faca login primeiro.');
+    validatePasswordComplexity(newPassword);
+    const target = (targetEmail || session.email || '').trim().toLowerCase();
+    const isSelf = target === String(session.email || '').toLowerCase();
+    const body = { targetEmail: target };
+    body.newPasswordHash = await hashPassword(newPassword);
+    if (isSelf) {
+      if (!oldPassword) throw new Error('Informe a senha atual.');
+      body.oldPasswordHash = await hashPassword(oldPassword);
+    }
+    await apiFetch('/api/change-password', { method: 'POST', body });
+    // Se alterou a propria, refresca cache para consistencia. O token
+    // continua valido (so altera o hash, nao revoga sessao).
+    await syncPull();
+    return true;
+  }
+
   // ---------- Console helpers de emergencia ----------
   // Sem efeito local — agora a fonte da verdade eh o servidor. Mantemos
   // a funcao exposta para nao quebrar integracoes antigas: ela apenas
@@ -840,6 +865,64 @@
     @media (max-width: 640px) {
       .admin-newuser-grid { grid-template-columns: 1fr 1fr; }
     }
+
+    /* Botao + form de "Alterar senha" dentro de cada bloco de usuario */
+    .admin-pwd-toggle {
+      margin-left: 8px;
+      padding: 5px 10px;
+      border: 1px solid #e8eaed;
+      background: #fff;
+      color: #1a1d24;
+      font-size: 12px; font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background .15s ease, border-color .15s ease, color .15s ease;
+    }
+    .admin-pwd-toggle:hover {
+      border-color: #c41e1e;
+      background: #fff5f5;
+      color: #c41e1e;
+    }
+    .admin-pwd-toggle.open {
+      background: #c41e1e; color: #fff; border-color: #c41e1e;
+    }
+    .admin-pwd-form {
+      margin-top: 12px; padding: 12px 14px;
+      background: #fafafa; border: 1px solid #e8eaed;
+      border-radius: 8px;
+      display: grid; gap: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      align-items: end;
+    }
+    .admin-pwd-form[hidden] { display: none; }
+    .admin-pwd-field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: #5f6368; margin-bottom: 4px;
+    }
+    .admin-pwd-field input {
+      width: 100%; padding: 8px 10px; border: 1px solid #e8eaed;
+      border-radius: 6px; font-size: 13px; font-family: inherit;
+      outline: none; background: #fff; color: #1a1d24;
+    }
+    .admin-pwd-field input:focus {
+      border-color: #c41e1e;
+      box-shadow: 0 0 0 3px rgba(196, 30, 30, 0.10);
+    }
+    .admin-pwd-actions {
+      grid-column: 1 / -1;
+      display: flex; gap: 8px; justify-content: flex-end;
+    }
+    .admin-pwd-msg {
+      grid-column: 1 / -1;
+      font-size: 12px; display: none;
+    }
+    .admin-pwd-msg.show { display: block; }
+    .admin-pwd-msg.error { color: #b3261e; }
+    .admin-pwd-msg.ok { color: #1e7e34; }
+    @media (max-width: 640px) {
+      .admin-pwd-form { grid-template-columns: 1fr; }
+    }
   `;
 
   function injectStyle() {
@@ -1268,8 +1351,15 @@
     const users = listUsers();
     const menusEditable = MENUS.filter((m) => !m.always);
 
+    const currentSession = getSession();
+    const currentEmail = String((currentSession && currentSession.email) || '').toLowerCase();
+    const currentIsSuper = currentSession && currentSession.role === 'superadmin';
+
     const userBlocks = users.map((u) => {
       const isSuper = u.role === 'superadmin';
+      const isSelf = String(u.email).toLowerCase() === currentEmail;
+      // Pode trocar senha se: for ele mesmo OU eu sou super admin.
+      const canChangePwd = isSelf || currentIsSuper;
       const roleBadge = isSuper
         ? '<span class="admin-role-badge super">Super Admin</span>'
         : '<span class="admin-role-badge">Usuário</span>';
@@ -1292,14 +1382,40 @@
           `;
         })
         .join('');
+      const pwdBtn = canChangePwd
+        ? `<button type="button" class="admin-pwd-toggle" data-pwd-toggle="${escapeHtml(u.email)}">Alterar senha</button>`
+        : '';
+      const pwdForm = canChangePwd ? `
+        <div class="admin-pwd-form" data-pwd-form="${escapeHtml(u.email)}" data-is-self="${isSelf ? '1' : '0'}" hidden>
+          ${isSelf ? `
+            <div class="admin-pwd-field">
+              <label>Senha atual</label>
+              <input type="password" data-pwd-current autocomplete="current-password" />
+            </div>` : ''}
+          <div class="admin-pwd-field">
+            <label>Nova senha</label>
+            <input type="password" data-pwd-new autocomplete="new-password" />
+          </div>
+          <div class="admin-pwd-field">
+            <label>Confirmar nova senha</label>
+            <input type="password" data-pwd-confirm autocomplete="new-password" />
+          </div>
+          <div class="admin-pwd-actions">
+            <button type="button" class="admin-btn secondary" data-pwd-cancel="${escapeHtml(u.email)}">Cancelar</button>
+            <button type="button" class="admin-btn primary" data-pwd-save="${escapeHtml(u.email)}">Salvar</button>
+          </div>
+          <div class="admin-pwd-msg" data-pwd-msg></div>
+        </div>` : '';
       return `
         <div class="admin-user-block">
           <div class="admin-user-header">
             <strong>${escapeHtml(u.name)}</strong>
             ${roleBadge}
             <small>${escapeHtml(u.email)}</small>
+            ${pwdBtn}
           </div>
           <div class="admin-perms-row">${chips}</div>
+          ${pwdForm}
         </div>
       `;
     }).join('');
@@ -1390,6 +1506,93 @@
       }
     });
 
+    // Toggle do form de "Alterar senha" em cada bloco de usuario.
+    overlay.addEventListener('click', (e) => {
+      const toggle = e.target.closest('[data-pwd-toggle]');
+      if (toggle) {
+        const email = toggle.getAttribute('data-pwd-toggle');
+        const form = overlay.querySelector(`[data-pwd-form="${CSS.escape(email)}"]`);
+        if (!form) return;
+        const willOpen = form.hasAttribute('hidden');
+        // Fecha qualquer outro form aberto antes de abrir este.
+        overlay.querySelectorAll('.admin-pwd-form:not([hidden])').forEach((f) => f.setAttribute('hidden', ''));
+        overlay.querySelectorAll('.admin-pwd-toggle.open').forEach((b) => b.classList.remove('open'));
+        if (willOpen) {
+          form.removeAttribute('hidden');
+          toggle.classList.add('open');
+          const first = form.querySelector('input');
+          if (first) first.focus();
+        }
+        return;
+      }
+      const cancel = e.target.closest('[data-pwd-cancel]');
+      if (cancel) {
+        const email = cancel.getAttribute('data-pwd-cancel');
+        const form = overlay.querySelector(`[data-pwd-form="${CSS.escape(email)}"]`);
+        if (form) {
+          form.setAttribute('hidden', '');
+          form.querySelectorAll('input').forEach((i) => { i.value = ''; });
+          const msg = form.querySelector('[data-pwd-msg]');
+          if (msg) msg.classList.remove('show', 'error', 'ok');
+        }
+        const toggle = overlay.querySelector(`[data-pwd-toggle="${CSS.escape(email)}"]`);
+        if (toggle) toggle.classList.remove('open');
+        return;
+      }
+    });
+
+    // Salvar nova senha
+    overlay.addEventListener('click', async (e) => {
+      const save = e.target.closest('[data-pwd-save]');
+      if (!save) return;
+      const email = save.getAttribute('data-pwd-save');
+      const form = overlay.querySelector(`[data-pwd-form="${CSS.escape(email)}"]`);
+      if (!form) return;
+      const msg = form.querySelector('[data-pwd-msg]');
+      msg.classList.remove('show', 'error', 'ok');
+      const isSelf = form.getAttribute('data-is-self') === '1';
+      const oldInput = form.querySelector('[data-pwd-current]');
+      const newInput = form.querySelector('[data-pwd-new]');
+      const confirmInput = form.querySelector('[data-pwd-confirm]');
+      const oldPassword = oldInput ? oldInput.value : '';
+      const newPassword = newInput.value;
+      const confirmPassword = confirmInput.value;
+
+      if (isSelf && !oldPassword) {
+        msg.textContent = 'Informe a senha atual.';
+        msg.classList.add('show', 'error');
+        return;
+      }
+      if (!newPassword) {
+        msg.textContent = 'Informe a nova senha.';
+        msg.classList.add('show', 'error');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        msg.textContent = 'A confirmacao nao bate com a nova senha.';
+        msg.classList.add('show', 'error');
+        return;
+      }
+
+      save.disabled = true;
+      try {
+        await changePassword({ targetEmail: email, oldPassword, newPassword });
+        msg.textContent = 'Senha atualizada.';
+        msg.classList.add('show', 'ok');
+        form.querySelectorAll('input').forEach((i) => { i.value = ''; });
+        setTimeout(() => {
+          form.setAttribute('hidden', '');
+          const toggle = overlay.querySelector(`[data-pwd-toggle="${CSS.escape(email)}"]`);
+          if (toggle) toggle.classList.remove('open');
+        }, 900);
+      } catch (err) {
+        msg.textContent = err.message || 'Falha ao atualizar senha.';
+        msg.classList.add('show', 'error');
+      } finally {
+        save.disabled = false;
+      }
+    });
+
     overlay.querySelector('#admin-save-btn').addEventListener('click', async () => {
       const saveBtn = overlay.querySelector('#admin-save-btn');
       saveBtn.disabled = true;
@@ -1466,6 +1669,7 @@
     validatePasswordComplexity,
     requestPasswordReset,
     resetPasswordWithToken,
+    changePassword,
     emergencyResetPassword,
     bootstrapSuperAdmin,
     ensureSuperAdmins,
