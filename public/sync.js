@@ -87,6 +87,44 @@
     trackChange(key, null);
   };
 
+  // ----- Catch-up push -----
+  // Chaves dihmec_* que ja estao no localStorage mas NAO vieram do
+  // servidor neste pull. Sao dados que o usuario cadastrou antes do
+  // sync.js estar ativo (versao legada do site, primeira sessao apos
+  // migracao, cache antigo, etc.). Sobem para o banco em um unico PUT
+  // para que outros usuarios passem a enxerga-los e o proprio usuario
+  // nao perca os dados se limpar cache.
+  async function catchUpPush(serverKeys) {
+    const token = getToken();
+    if (!token) return { skipped: 'no-token' };
+    const items = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!isSyncable(k)) continue;
+      if (serverKeys.has(k)) continue; // ja existe no servidor
+      const v = localStorage.getItem(k);
+      if (v == null || v === '') continue;
+      items.push({ key: k, value: v });
+    }
+    if (items.length === 0) return { ok: true, uploaded: 0 };
+    try {
+      const r = await fetch('/api/sync', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ items }),
+      });
+      if (!r.ok) {
+        console.warn('[DIHMECSync] catch-up push falhou', r.status);
+        return { error: r.status };
+      }
+      console.info('[DIHMECSync] catch-up push: ' + items.length + ' chave(s) subida(s)', items.map(it => it.key));
+      return { ok: true, uploaded: items.length, keys: items.map(it => it.key) };
+    } catch (e) {
+      console.warn('[DIHMECSync] catch-up push: erro de rede', e);
+      return { error: 'network' };
+    }
+  }
+
   // ----- Pull -----
   async function pull() {
     const token = getToken();
@@ -105,6 +143,11 @@
         if (v === null || v === undefined) continue;
         origSet(k, typeof v === 'string' ? v : JSON.stringify(v));
       }
+      // Catch-up: dados locais que nao estao no servidor sao enviados.
+      // Roda em background — nao bloqueia o evento 'dihmec:synced' pra
+      // store.js aplicar a UI imediatamente com o que tem.
+      const serverKeys = new Set(Object.keys(data));
+      catchUpPush(serverKeys).catch(() => {});
       // Notifica quem estiver escutando (store.js re-aplica os tbodies)
       window.dispatchEvent(new CustomEvent('dihmec:synced', { detail: { keys: Object.keys(data) } }));
       return { ok: true, keys: Object.keys(data) };
@@ -128,5 +171,11 @@
     pull,
     flush,
     isSyncable,
+    // Forca um push de TODAS as chaves dihmec_* locais para o servidor.
+    // Util pra debug e migracoes manuais. Roda no console:
+    //   await DIHMECSync.pushAllLocal()
+    async pushAllLocal() {
+      return catchUpPush(new Set());
+    },
   };
 })();
