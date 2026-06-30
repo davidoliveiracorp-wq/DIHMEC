@@ -683,6 +683,29 @@
     background: var(--border);
   }
 
+  /* Botão primário de busca — fica ao lado do "Limpar" */
+  .search-btn {
+    padding: 10px 22px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: filter var(--transition), transform var(--transition);
+  }
+  .search-btn:hover {
+    filter: brightness(0.92);
+  }
+  .search-btn:active {
+    transform: translateY(1px);
+  }
+
   /* Botão de Toggle Dia/Noite — agora dentro da sidebar, abaixo do menu */
   .sidebar-theme-toggle {
     margin: 8px 16px 20px;
@@ -1288,7 +1311,7 @@
                         onkeyup="filterCustomers()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterCustomers()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">Todos</button>
@@ -1342,7 +1365,7 @@
                         onkeyup="filterVehicles()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearVehicleSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterVehicles()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-vehicle="all" onclick="setVehicleFilter('all')">Todos</button>
@@ -1426,7 +1449,7 @@
                         onkeyup="filterProducts()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearProductSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterProducts()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-product="all" onclick="setProductFilter('all')">Todos</button>
@@ -1476,7 +1499,7 @@
                         onkeyup="filterReceivables()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearReceivablesSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterReceivables()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-receivable="all" onclick="setReceivableFilter('all')">Todos</button>
@@ -1533,7 +1556,7 @@
                         onkeyup="filterPaid()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearPaidSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterPaid()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-paid="all" onclick="setPaidFilter('all')">Todos</button>
@@ -1708,7 +1731,7 @@
                         <tbody id="os-items-table-body">
                           <tr>
                             <td><input type="number" class="os-item-qty" min="1" value="1" style="width: 60px; padding: 6px;" onchange="calculateItemTotal(this)" /></td>
-                            <td><input type="text" class="os-item-desc" placeholder="Descrição do produto/serviço" style="width: 100%; padding: 6px;" /></td>
+                            <td><input type="text" class="os-item-desc" list="dl-products" placeholder="Descrição do produto/serviço" style="width: 100%; padding: 6px;" /></td>
                             <td><input type="number" class="os-item-price" step="0.01" min="0" placeholder="0.00" style="width: 100px; padding: 6px;" onchange="calculateItemTotal(this)" /></td>
                             <td class="os-item-total">R$ 0,00</td>
                             <td>
@@ -1753,7 +1776,7 @@
                         onkeyup="filterPendingOS()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearPendingOSSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterPendingOS()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-pending="all" onclick="setPendingOSFilter('all')">Todos</button>
@@ -1834,7 +1857,7 @@
                         onkeyup="filterPendingOSFinish()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearPendingOSFinishSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterPendingOSFinish()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-pending-finish="all" onclick="setPendingOSFinishFilter('all')">Todos</button>
@@ -1934,7 +1957,7 @@
                         onkeyup="filterAllOS()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearAllOSSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterAllOS()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-all-os="all" onclick="setAllOSFilter('all')">Todos</button>
@@ -1991,7 +2014,7 @@
                         onkeyup="filterByPlate()"
                       />
                     </div>
-                    <button class="clear-search" onclick="clearPlateSearch()">Limpar</button>
+                    <button class="search-btn" type="button" onclick="filterByPlate()">🔍 Pesquisar</button>
                   </div>
                   <div class="search-filters">
                     <button class="filter-btn active" data-filter-plate="all" onclick="setPlateFilter('all')">Todos</button>
@@ -4101,7 +4124,7 @@ Telefone: ${vehicleData.telefone}
         const newRow = document.createElement('tr');
         newRow.innerHTML = `
           <td><input type="number" class="os-item-qty" min="1" value="1" style="width: 60px; padding: 6px;" onchange="calculateItemTotal(this)" /></td>
-          <td><input type="text" class="os-item-desc" placeholder="Descrição do produto/serviço" style="width: 100%; padding: 6px;" /></td>
+          <td><input type="text" class="os-item-desc" list="dl-products" placeholder="Descrição do produto/serviço" style="width: 100%; padding: 6px;" /></td>
           <td><input type="number" class="os-item-price" step="0.01" min="0" placeholder="0.00" style="width: 100px; padding: 6px;" onchange="calculateItemTotal(this)" /></td>
           <td class="os-item-total">R$ 0,00</td>
           <td>
@@ -4147,7 +4170,7 @@ Telefone: ${vehicleData.telefone}
         tableBody.innerHTML = `
           <tr>
             <td><input type="number" class="os-item-qty" min="1" value="1" style="width: 60px; padding: 6px;" onchange="calculateItemTotal(this)" /></td>
-            <td><input type="text" class="os-item-desc" placeholder="Descrição do produto/serviço" style="width: 100%; padding: 6px;" /></td>
+            <td><input type="text" class="os-item-desc" list="dl-products" placeholder="Descrição do produto/serviço" style="width: 100%; padding: 6px;" /></td>
             <td><input type="number" class="os-item-price" step="0.01" min="0" placeholder="0.00" style="width: 100px; padding: 6px;" onchange="calculateItemTotal(this)" /></td>
             <td class="os-item-total">R$ 0,00</td>
             <td>
@@ -4492,6 +4515,324 @@ Telefone: ${vehicleData.telefone}
           plateSearchTable.appendChild(vehicleRow);
         });
       }
+
+      // ============================================================
+      // INTEGRAÇÃO DE MENUS + BOTÃO DE PESQUISA
+      // Conecta os formulários com os dados já cadastrados:
+      //  - Botão "Pesquisar" ao lado de cada "Limpar"
+      //  - Listas pendentes de Cancelar/Finalizar alimentadas pelas OS
+      //  - Autocompletar (clientes, placas, produtos, OS) com preenchimento
+      // ============================================================
+      (function () {
+        'use strict';
+
+        function brlToNumber(txt) {
+          const m = String(txt || '').replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+          const n = parseFloat(m);
+          return isNaN(n) ? 0 : n;
+        }
+
+        function colTexts(bodyId, idx) {
+          const b = document.getElementById(bodyId);
+          if (!b) return [];
+          return Array.from(b.querySelectorAll('tr')).map((tr) => {
+            const c = tr.querySelectorAll('td');
+            return c[idx] ? c[idx].textContent.trim() : '';
+          });
+        }
+
+        function getPendingOSRows() {
+          const all = document.getElementById('all-os-table-body');
+          if (!all) return [];
+          return Array.from(all.querySelectorAll('tr')).filter((tr) => {
+            const ds = (tr.getAttribute('data-status') || '').toLowerCase();
+            if (ds) return ds === 'pendente';
+            const c = tr.querySelectorAll('td');
+            return c[7] && /pendente/i.test(c[7].textContent);
+          });
+        }
+
+        // ---- Listas de Cancelar / Finalizar alimentadas pelas OS cadastradas ----
+        function syncPendingOSLists() {
+          // Não reconstrói enquanto a tabela-fonte (all-os) ainda não foi
+          // restaurada do localStorage — evita apagar as listas no carregamento.
+          const allOS = document.getElementById('all-os-table-body');
+          if (!allOS || allOS.querySelectorAll('tr').length === 0) return;
+          const rows = getPendingOSRows();
+          const cancelBody = document.getElementById('pending-os-table-body');
+          const finishBody = document.getElementById('pending-os-finish-table-body');
+          if (cancelBody) cancelBody.innerHTML = '';
+          if (finishBody) finishBody.innerHTML = '';
+
+          rows.forEach((tr) => {
+            const c = tr.querySelectorAll('td');
+            const os = c[0] ? c[0].textContent.trim() : '';
+            const date = c[1] ? c[1].textContent.trim() : '';
+            const customer = c[2] ? c[2].textContent.trim() : '';
+            const vehicle = c[3] ? c[3].textContent.trim() : '';
+            const plate = c[4] ? c[4].textContent.trim() : '';
+            const services = c[5] ? c[5].textContent.trim() : '';
+            const valorTxt = c[6] ? c[6].textContent.trim() : '';
+            const valorNum = brlToNumber(valorTxt).toFixed(2);
+            const safe = (s) => String(s).replace(/'/g, '');
+
+            if (cancelBody) {
+              const r = document.createElement('tr');
+              r.innerHTML =
+                '<td>' + os + '</td><td>' + date + '</td><td>' + customer + '</td><td>' + vehicle +
+                '</td><td>' + plate + '</td><td>' + services + '</td><td>' + valorTxt + '</td>' +
+                '<td><div class="action-buttons"><button class="btn-action btn-delete" type="button" onclick="selectOSForCancel(\'' +
+                safe(os) + '\',\'' + safe(plate) + '\',\'' + safe(customer) + '\',\'' + safe(vehicle) +
+                '\')">Selecionar</button></div></td>';
+              cancelBody.appendChild(r);
+            }
+            if (finishBody) {
+              const r = document.createElement('tr');
+              r.innerHTML =
+                '<td>' + os + '</td><td>' + date + '</td><td>' + customer + '</td><td>' + vehicle +
+                '</td><td>' + plate + '</td><td>' + services + '</td><td>' + valorTxt + '</td>' +
+                '<td><div class="action-buttons"><button class="btn-action btn-edit" type="button" onclick="selectOSForFinish(\'' +
+                safe(os) + '\',\'' + safe(plate) + '\',\'' + safe(customer) + '\',\'' + safe(vehicle) +
+                '\',\'' + safe(services) + '\',\'' + valorNum + '\')">Selecionar</button></div></td>';
+              finishBody.appendChild(r);
+            }
+          });
+        }
+
+        // ---- Consolidação: garante que clientes presentes em OS / Valores
+        // (a Receber e Pagos) também existam no Cadastro de Cliente — e, por
+        // consequência, em Veículos e Pesquisa por Placa (que derivam dele). ----
+        function consolidateCustomers() {
+          const custBody = document.getElementById('customers-table-body');
+          if (!custBody) return 0;
+          const existing = new Set(
+            Array.from(custBody.querySelectorAll('tr')).map((tr) => {
+              const c = tr.querySelectorAll('td');
+              return c[3] ? c[3].textContent.trim().toUpperCase() : '';
+            }).filter(Boolean)
+          );
+          // Em todas as tabelas de OS as colunas são: 2=Cliente, 3=Veículo, 4=Placa.
+          const sources = ['receivables-table-body', 'paid-table-body', 'all-os-table-body'];
+          let added = 0;
+          sources.forEach((id) => {
+            const b = document.getElementById(id);
+            if (!b) return;
+            b.querySelectorAll('tr').forEach((tr) => {
+              const c = tr.querySelectorAll('td');
+              const name = c[2] ? c[2].textContent.trim() : '';
+              const vehicle = c[3] ? c[3].textContent.trim() : '';
+              const plate = c[4] ? c[4].textContent.trim() : '';
+              const p = plate.toUpperCase();
+              if (!p || p === '-' || existing.has(p)) return;
+              existing.add(p);
+              const parts = vehicle.split(/\s+/).filter(Boolean);
+              const brand = parts.shift() || '-';
+              const model = parts.join(' ') || '-';
+              const cid = Date.now() + added;
+              const row = document.createElement('tr');
+              row.innerHTML =
+                '<td>' + (name || '-') + '</td>' +
+                '<td>-</td>' +
+                '<td>-</td>' +
+                '<td>' + plate + '</td>' +
+                '<td>' + model + '</td>' +
+                '<td>' + brand + '</td>' +
+                '<td>-</td>' +
+                '<td>-</td>' +
+                '<td><div class="action-buttons">' +
+                  '<button class="btn-action btn-edit" onclick="editCustomer(' + cid + ')">Editar</button>' +
+                  '<button class="btn-action btn-delete" onclick="deleteCustomer(' + cid + ')">Excluir</button>' +
+                '</div></td>';
+              custBody.appendChild(row);
+              added++;
+            });
+          });
+          if (added > 0) {
+            if (typeof updateVehiclesList === 'function') updateVehiclesList();
+            if (typeof syncPlateSearchList === 'function') syncPlateSearchList();
+          }
+          return added;
+        }
+
+        // ---- Datalists (autocompletar) ----
+        function setDL(id, values) {
+          let dl = document.getElementById(id);
+          if (!dl) { dl = document.createElement('datalist'); dl.id = id; document.body.appendChild(dl); }
+          const uniq = Array.from(new Set(values.filter((v) => v && v !== '-')));
+          dl.innerHTML = uniq.map((v) => '<option value="' + String(v).replace(/"/g, '&quot;') + '"></option>').join('');
+        }
+        function refreshDataLists() {
+          setDL('dl-customers', colTexts('customers-table-body', 0));
+          setDL('dl-plates', colTexts('customers-table-body', 3));
+          setDL('dl-products', colTexts('products-table-body', 1));
+          setDL('dl-pending-os', getPendingOSRows().map((tr) => {
+            const c = tr.querySelector('td'); return c ? c.textContent.trim() : '';
+          }));
+        }
+
+        // ---- Preenchimento automático a partir do cadastro ----
+        function findCustomerBy(idx, value) {
+          const b = document.getElementById('customers-table-body');
+          if (!b) return null;
+          const v = String(value || '').trim().toLowerCase();
+          if (!v) return null;
+          return Array.from(b.querySelectorAll('tr')).find((tr) => {
+            const c = tr.querySelectorAll('td');
+            return c[idx] && c[idx].textContent.trim().toLowerCase() === v;
+          });
+        }
+        function fillFromCustomerRow(tr) {
+          if (!tr) return;
+          const c = tr.querySelectorAll('td');
+          const name = c[0].textContent.trim();
+          const phone = c[2].textContent.trim();
+          const plate = c[3].textContent.trim();
+          const model = c[4].textContent.trim();
+          const brand = c[5].textContent.trim();
+          const year = c[6].textContent.trim();
+          const vehicle = [brand, model].filter((x) => x && x !== '-').join(' ');
+          const set = (id, val) => { const e = document.getElementById(id); if (e && val && val !== '-') e.value = val; };
+          set('os-customer-name', name);
+          set('os-customer-phone', phone);
+          set('os-vehicle-name', vehicle);
+          set('os-vehicle-plate', plate);
+          set('os-vehicle-year', year);
+        }
+        function findAllOSBy(os) {
+          const b = document.getElementById('all-os-table-body');
+          if (!b) return null;
+          const v = String(os || '').trim().toLowerCase();
+          if (!v) return null;
+          return Array.from(b.querySelectorAll('tr')).find((tr) => {
+            const c = tr.querySelector('td');
+            return c && c.textContent.trim().toLowerCase() === v;
+          });
+        }
+
+        function onOSDescChange(e) {
+          const t = e.target;
+          if (!t || !t.classList || !t.classList.contains('os-item-desc')) return;
+          const b = document.getElementById('products-table-body');
+          if (!b) return;
+          const v = t.value.trim().toLowerCase();
+          const row = Array.from(b.querySelectorAll('tr')).find((tr) => {
+            const c = tr.querySelectorAll('td');
+            return c[1] && c[1].textContent.trim().toLowerCase() === v;
+          });
+          if (!row) return;
+          const c = row.querySelectorAll('td');
+          const price = brlToNumber(c[5] ? c[5].textContent : '');
+          const tr = t.closest('tr');
+          const pi = tr ? tr.querySelector('.os-item-price') : null;
+          if (pi && price > 0) {
+            pi.value = price.toFixed(2);
+            if (typeof calculateItemTotal === 'function') calculateItemTotal(pi);
+          }
+        }
+
+        // ---- Botão "Pesquisar" ao lado de cada "Limpar" ----
+        function enhanceSearchBoxes() {
+          document.querySelectorAll('.search-box').forEach((box) => {
+            if (box.querySelector('.search-btn')) return;
+            const input = box.querySelector('.search-input');
+            const clearBtn = box.querySelector('.clear-search');
+            if (!input || !clearBtn) return;
+            const raw = input.getAttribute('onkeyup') || '';
+            const fnName = raw.replace(/\s*\(\s*\)\s*;?\s*$/, '').trim();
+            const run = () => { if (fnName && typeof window[fnName] === 'function') window[fnName](); };
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'search-btn';
+            btn.innerHTML = '🔍 Pesquisar';
+            btn.addEventListener('click', run);
+            box.insertBefore(btn, clearBtn);
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') { e.preventDefault(); run(); }
+            });
+          });
+        }
+
+        function wireInputs() {
+          const link = (id, list, handler) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (list) el.setAttribute('list', list);
+            if (handler) el.addEventListener('change', handler);
+          };
+          link('os-customer-name', 'dl-customers', function () {
+            const tr = findCustomerBy(0, this.value); if (tr) fillFromCustomerRow(tr);
+          });
+          link('os-vehicle-plate', 'dl-plates', function () {
+            const tr = findCustomerBy(3, this.value); if (tr) fillFromCustomerRow(tr);
+          });
+          link('check-plate', 'dl-plates', null);
+          link('cancel-os-number', 'dl-pending-os', function () {
+            const tr = findAllOSBy(this.value);
+            if (tr) { const c = tr.querySelectorAll('td'); const p = document.getElementById('cancel-vehicle-plate'); if (p && c[4]) p.value = c[4].textContent.trim(); }
+          });
+          link('cancel-vehicle-plate', 'dl-plates', null);
+          link('finish-os-number', 'dl-pending-os', function () {
+            const tr = findAllOSBy(this.value);
+            if (!tr) return;
+            const c = tr.querySelectorAll('td');
+            const set = (id, val) => { const e = document.getElementById(id); if (e) e.value = val; };
+            if (c[4]) set('finish-vehicle-plate', c[4].textContent.trim());
+            if (c[5]) set('finish-services', c[5].textContent.trim());
+            const ft = document.getElementById('finish-total');
+            if (ft && c[6]) ft.value = brlToNumber(c[6].textContent).toFixed(2);
+          });
+          link('finish-vehicle-plate', 'dl-plates', null);
+        }
+
+        function onMenuOpen(f) {
+          if (f === 'cancelar-os' || f === 'finalizar-os') { syncPendingOSLists(); refreshDataLists(); }
+          if (f === 'nova-os' || f === 'checklist') { refreshDataLists(); }
+          if (f === 'cadastro-cliente' || f === 'veiculos' || f === 'pesquisa-placa') {
+            consolidateCustomers();
+            if (f === 'veiculos' && typeof updateVehiclesList === 'function') updateVehiclesList();
+            if (f === 'pesquisa-placa' && typeof syncPlateSearchList === 'function') syncPlateSearchList();
+            refreshDataLists();
+          }
+        }
+
+        let wired = false;
+        function init() {
+          enhanceSearchBoxes();
+          if (!wired) {
+            wireInputs();
+            const osBody = document.getElementById('os-items-table-body');
+            if (osBody) osBody.addEventListener('change', onOSDescChange);
+            document.querySelectorAll('.menu-item').forEach((item) => {
+              item.addEventListener('click', function () {
+                const f = this.getAttribute('data-form');
+                setTimeout(() => onMenuOpen(f), 0);
+              });
+            });
+            if (typeof window.saveOS === 'function') {
+              const _s = window.saveOS;
+              window.saveOS = function () { const r = _s.apply(this, arguments); try { syncPendingOSLists(); refreshDataLists(); } catch (e) {} return r; };
+            }
+            if (typeof window.finalizeOrder === 'function') {
+              const _f = window.finalizeOrder;
+              window.finalizeOrder = function () { const r = _f.apply(this, arguments); try { syncPendingOSLists(); refreshDataLists(); } catch (e) {} return r; };
+            }
+            wired = true;
+          }
+          consolidateCustomers();
+          refreshDataLists();
+          syncPendingOSLists();
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', init);
+        } else {
+          init();
+        }
+        // Após o pull pós-login (store.js dispara este evento), re-sincroniza.
+        window.addEventListener('dihmec:synced', () => {
+          try { consolidateCustomers(); refreshDataLists(); syncPendingOSLists(); } catch (e) {}
+        });
+      })();
 
     </script>
   </body>
