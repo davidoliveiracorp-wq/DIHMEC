@@ -64,6 +64,13 @@ Logue de qualquer maquina com:
 - **`api/sync.js`** — espelha o `localStorage` no banco. GET retorna
   todos os blocos; PUT grava um ou varios. Bloqueia escrita em
   `dihmec_users`/`dihmec_permissions` para nao-super-admins.
+- **`api/ponto.js`** — controle de ponto (marcar entrada / saida almoco /
+  retorno almoco / saida com o relogio do servidor, historico, relatorio,
+  ajuste manual e exclusao pelo gestor).
+- **`api/funcionarios.js`** — cadastro de funcionarios (role
+  `funcionario`). Gestor = super admin ou usuario com a permissao
+  "Gestao de Ponto". Funcionario so ve a aba "Controle de Ponto" e o
+  `/api/sync` nao entrega nem aceita dados para ele.
 - **`api/appointments.js`** — endpoint publico p/ o formulario
   "Agendar" do modal de login. Auto-cadastra cliente+veiculo se a
   placa nao existir.
@@ -86,7 +93,21 @@ CREATE TABLE sessions (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   expires_at TIMESTAMPTZ NOT NULL
 );
+CREATE TABLE ponto (
+  email TEXT NOT NULL,
+  dia DATE NOT NULL,            -- dia no fuso America/Sao_Paulo
+  entrada TIMESTAMPTZ,
+  almoco_saida TIMESTAMPTZ,
+  almoco_retorno TIMESTAMPTZ,
+  saida TIMESTAMPTZ,
+  obs TEXT,
+  ajustado_por TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (email, dia)
+);
 ```
+
+A tabela `ponto` eh criada automaticamente no primeiro acesso a API.
 
 Tudo o que antes era chave `localStorage` (ex.:
 `dihmec_customers_html`, `dihmec_users`, `dihmec_permissions`,

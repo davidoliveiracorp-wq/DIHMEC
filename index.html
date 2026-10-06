@@ -10,6 +10,7 @@
     <script src="/sync.js"></script>
     <script src="/auth.js"></script>
     <script src="/store.js" defer></script>
+    <script src="/ponto.js" defer></script>
     <style type="text/css" media="screen">
   :root {
     --bg-page: #f0f2f5;
@@ -1177,6 +1178,7 @@
           <li><a href="#" class="menu-item" data-form="pesquisar-os">Pesquisar OS Pendente</a></li>
           <li><a href="#" class="menu-item" data-form="pesquisa-placa">Pesquisa por Placa</a></li>
           <li><a href="#" class="menu-item" data-form="relatorio-os">Relatório de Ordem de Serviço</a></li>
+          <li><a href="#" class="menu-item" data-form="controle-ponto">Controle de Ponto</a></li>
           <li><a href="diagrama.html" class="menu-item">Diagrama</a></li>
         </ul>
         <div class="sidebar-theme-toggle">
@@ -2129,6 +2131,9 @@
                 </div>
               </div>
 
+              <!-- Controle de Ponto (conteudo renderizado por /ponto.js) -->
+              <div class="form-container" id="form-controle-ponto"></div>
+
       </div>
           </div>
         </div>
@@ -2289,6 +2294,12 @@
           subtitle: 'Relatórios',
           sectionTitle: 'Relatórios de Ordens de Serviço',
           description: 'Gere relatórios semanal, mensal ou anual das ordens de serviço.'
+        },
+        'controle-ponto': {
+          title: 'Controle de Ponto',
+          subtitle: 'Funcionários',
+          sectionTitle: 'Registro de Ponto',
+          description: 'Marque entrada, saída para almoço, retorno do almoço e saída. O horário é registrado pelo servidor.'
         }
       };
 

@@ -130,6 +130,8 @@
     { id: 'pesquisa-placa', label: 'Pesquisa por Placa' },
     { id: 'relatorio-os', label: 'Relatório de Ordem de Serviço' },
     { id: 'diagrama', label: 'Diagrama' },
+    { id: 'controle-ponto', label: 'Controle de Ponto (marcar)' },
+    { id: 'ponto-gestao', label: 'Gestão de Ponto (cadastro/relatórios)' },
   ];
 
   async function hashPassword(password) {
@@ -193,6 +195,8 @@
     session = session || getSession();
     if (!session) return false;
     if (session.role === 'superadmin') return true;
+    // Funcionario (login so do ponto) enxerga apenas a aba de ponto.
+    if (session.role === 'funcionario') return menuId === 'controle-ponto';
     const def = MENUS.find((m) => m.id === menuId);
     if (def && def.always) return true;
     return getUserPermissions(session.email).includes(menuId);
@@ -941,7 +945,8 @@
     const bar = document.createElement('div');
     bar.id = 'auth-userbar';
     bar.className = 'auth-userbar';
-    const roleLabel = session.role === 'superadmin' ? 'Super Admin' : 'Usuário';
+    const roleLabel = session.role === 'superadmin' ? 'Super Admin'
+      : session.role === 'funcionario' ? 'Funcionário' : 'Usuário';
     const roleClass = session.role === 'superadmin' ? '' : 'user';
     bar.innerHTML = `
       <span class="auth-badge ${roleClass}">${roleLabel}</span>
@@ -1032,8 +1037,8 @@
 
         <form id="auth-form-login" novalidate>
           <div class="auth-field">
-            <label for="auth-login-email">E-mail</label>
-            <input type="email" id="auth-login-email" autocomplete="email" required />
+            <label for="auth-login-email">E-mail ou usuário</label>
+            <input type="text" id="auth-login-email" autocomplete="username" autocapitalize="none" spellcheck="false" required />
           </div>
           <div class="auth-field">
             <label for="auth-login-password">Senha</label>
@@ -1305,7 +1310,10 @@
       const menuId = getMenuIdFromAnchor(a);
       if (!menuId) return;
       const li = a.closest('li');
-      if (!hasPermission(menuId, session)) {
+      // Quem gerencia o ponto tambem precisa ver a aba.
+      const allowed = hasPermission(menuId, session) ||
+        (menuId === 'controle-ponto' && hasPermission('ponto-gestao', session));
+      if (!allowed) {
         if (li) li.style.display = 'none';
         else a.style.display = 'none';
       } else {
@@ -1314,6 +1322,11 @@
       }
     });
     if (session.role === 'superadmin') injectAdminMenu();
+    // O formulario aberto por padrao (Cadastro de Cliente) nao eh
+    // permitido ao funcionario: abre direto o ponto.
+    if (session.role === 'funcionario' && typeof window.showForm === 'function') {
+      window.showForm('controle-ponto');
+    }
   }
 
   function enforcePagePermission() {
@@ -1348,7 +1361,8 @@
     overlay.id = 'admin-overlay';
     overlay.className = 'admin-overlay';
 
-    const users = listUsers();
+    // Funcionarios do ponto sao gerenciados na aba "Controle de Ponto".
+    const users = listUsers().filter((u) => u.role !== 'funcionario');
     const menusEditable = MENUS.filter((m) => !m.always);
 
     const currentSession = getSession();
@@ -1622,6 +1636,10 @@
     });
   }
 
+  function announceAuth() {
+    window.dispatchEvent(new CustomEvent('dihmec:auth-ready', { detail: getSession() }));
+  }
+
   async function requireAuth() {
     injectStyle();
     // Antes de qualquer leitura de dados, espera o pull inicial do
@@ -1632,6 +1650,7 @@
       renderUserBar();
       applyMenuPermissions();
       enforcePagePermission();
+      announceAuth();
       return getSession();
     }
     return new Promise((resolve) => {
@@ -1639,12 +1658,15 @@
         renderUserBar();
         applyMenuPermissions();
         enforcePagePermission();
+        announceAuth();
         resolve(getSession());
       });
     });
   }
 
   window.DIHMECAuth = {
+    apiFetch,
+    hashPassword,
     register,
     login,
     logout,

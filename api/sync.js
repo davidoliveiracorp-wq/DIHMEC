@@ -34,6 +34,14 @@ function isSyncable(key) {
 export default async function handler(req, res) {
   const session = await requireAuth(req, res);
   if (!session) return;
+  // Funcionario (controle de ponto) nao le nem grava os dados do
+  // sistema — so usa /api/ponto. Respondemos 200 vazio para o sync.js
+  // do navegador seguir funcionando sem erro.
+  if (session.role === 'funcionario') {
+    if (req.method === 'GET') return res.status(200).json({});
+    if (req.method === 'PUT') return res.status(200).json({ ok: true, count: 0, skipped: [{ reason: 'funcionario' }] });
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
   try {
     if (req.method === 'GET') {
       const rows = await listKV();
