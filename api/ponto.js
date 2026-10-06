@@ -208,6 +208,10 @@ export default async function handler(req, res) {
         if (v !== null && !TIME_RE.test(v)) return res.status(400).json({ error: 'Horario invalido: ' + v });
         times.push(v);
       }
+      const seq = times.filter(Boolean);
+      for (let i = 1; i < seq.length; i++) {
+        if (seq[i] <= seq[i - 1]) return res.status(400).json({ error: 'Horarios fora de ordem.' });
+      }
       const obs = body.obs == null ? null : String(body.obs).slice(0, 500);
       // ($dia::date + $hora::time) AT TIME ZONE 'America/Sao_Paulo' converte
       // a hora local para timestamptz; NULL + date = NULL limpa o campo.

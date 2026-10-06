@@ -71,6 +71,22 @@
     .ponto-form-msg { font-size: 0.875rem; margin-top: 6px; min-height: 1.2em; }
     .ponto-form-msg.ok { color: #1e7e34; }
     .ponto-form-msg.error { color: #b3261e; }
+    .ponto-saldo-pos { color: #1e7e34; font-weight: 600; }
+    .ponto-saldo-neg { color: #b3261e; font-weight: 600; }
+    .ponto-subtitle { grid-column: 1 / -1; font-size: 0.8125rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin: 6px 0 4px; }
+    .ponto-check { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
+    .ponto-modal-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(15,17,22,0.55); display: flex; align-items: center; justify-content: center; padding: 12px; }
+    .ponto-modal { background: var(--bg-card); color: var(--text-primary); width: 100%; max-width: 720px; max-height: calc(100dvh - 24px); border-radius: var(--radius-lg); box-shadow: 0 24px 64px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; text-align: left; }
+    .ponto-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .ponto-modal-head h3 { font-size: 1.0625rem; margin: 0; }
+    .ponto-modal-close { background: none; border: none; font-size: 26px; line-height: 1; cursor: pointer; color: var(--text-secondary); }
+    .ponto-modal-body { padding: 16px 20px; overflow-y: auto; }
+    .ponto-modal-foot { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; padding: 12px 20px; border-top: 1px solid var(--border); }
+    .ponto-modal-foot .btn-action { padding: 10px 18px; }
+    .ponto-modal-foot .spacer { flex: 1; }
+    body.dark-mode .ponto-modal { background: #2d2d2d; color: #E0E0E0; }
+    body.dark-mode .ponto-modal-head, body.dark-mode .ponto-modal-foot { border-color: #444; }
+    body.dark-mode .ponto-modal .form-group input, body.dark-mode .ponto-modal .form-group select { background: #1f1f1f; color: #E0E0E0; border-color: #555; }
     body.dark-mode .ponto-step { background: #2d2d2d; border-color: #555; }
     body.dark-mode .ponto-step.done { background: rgba(30,126,52,0.18); border-color: #2f9e4a; }
     body.dark-mode .ponto-step.next { border-color: #c41e1e; }
@@ -134,6 +150,127 @@
     if (min == null) return '—';
     return `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`;
   }
+  // Saldo com sinal: +0h30 / -1h05
+  function fmtSaldo(min) {
+    if (min == null) return '—';
+    const sign = min < 0 ? '-' : '+';
+    const a = Math.abs(min);
+    return `${sign}${Math.floor(a / 60)}h${String(a % 60).padStart(2, '0')}`;
+  }
+  function saldoHTML(min) {
+    if (min == null) return '—';
+    return `<span class="${min < 0 ? 'ponto-saldo-neg' : 'ponto-saldo-pos'}">${fmtSaldo(min)}</span>`;
+  }
+  function funcOf(email) { return state.funcionarios.find((x) => x.email === email) || null; }
+  // Minutos previstos pela jornada do funcionario (mesma conta das batidas).
+  function expectedMinutes(email) {
+    const f = funcOf(email);
+    return f && f.jornada ? workedMinutes(f.jornada) : null;
+  }
+  function jornadaText(j) {
+    if (!j || !j.entrada) return '—';
+    return j.almoco_saida
+      ? `${j.entrada}–${j.almoco_saida} / ${j.almoco_retorno}–${j.saida}`
+      : `${j.entrada}–${j.saida}`;
+  }
+  function fmtCPF(cpf) {
+    const d = String(cpf || '').replace(/\D/g, '');
+    return d.length === 11 ? `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}` : d;
+  }
+
+  // Campos de cadastro do funcionario — usados no form de cadastro e na
+  // janela de edicao. `p` eh o prefixo dos ids.
+  function funcFieldsHTML(p, f) {
+    f = f || {};
+    const j = f.jornada || {};
+    const v = (x) => esc(x || '');
+    return `
+      <div class="ponto-subtitle">Dados cadastrais</div>
+      <div class="form-group"><label for="${p}-name">Nome completo *</label>
+        <input type="text" id="${p}-name" required value="${v(f.name)}" placeholder="Ex.: João da Silva" /></div>
+      <div class="form-group"><label for="${p}-login">Login (usuário ou e-mail) *</label>
+        <input type="text" id="${p}-login" required value="${v(f.email)}" placeholder="Ex.: joao.silva" autocapitalize="none" spellcheck="false" /></div>
+      <div class="form-group"><label for="${p}-cargo">Cargo</label>
+        <input type="text" id="${p}-cargo" value="${v(f.cargo)}" placeholder="Ex.: Mecânico" /></div>
+      <div class="form-group"><label for="${p}-cpf">CPF</label>
+        <input type="text" id="${p}-cpf" inputmode="numeric" value="${v(fmtCPF(f.cpf))}" placeholder="000.000.000-00" /></div>
+      <div class="form-group"><label for="${p}-telefone">Telefone</label>
+        <input type="tel" id="${p}-telefone" value="${v(f.telefone)}" placeholder="(11) 99999-0000" /></div>
+      <div class="form-group"><label for="${p}-matricula">Matrícula</label>
+        <input type="text" id="${p}-matricula" value="${v(f.matricula)}" /></div>
+      <div class="form-group"><label for="${p}-admissao">Data de admissão</label>
+        <input type="date" id="${p}-admissao" value="${v(f.admissao)}" /></div>
+      <div class="ponto-subtitle">Jornada (horário previsto)</div>
+      ${STEPS.map((s) => `
+      <div class="form-group"><label for="${p}-j-${s.id}">${s.label}</label>
+        <input type="time" id="${p}-j-${s.id}" value="${v(j[s.id])}" /></div>`).join('')}
+    `;
+  }
+  function readFuncFields(p) {
+    const val = (id) => { const e = document.getElementById(`${p}-${id}`); return e ? e.value.trim() : ''; };
+    const jornada = {};
+    STEPS.forEach((s) => { jornada[s.id] = val('j-' + s.id); });
+    return {
+      name: val('name'),
+      login: val('login').toLowerCase(),
+      cargo: val('cargo'),
+      cpf: val('cpf'),
+      telefone: val('telefone'),
+      matricula: val('matricula'),
+      admissao: val('admissao'),
+      jornada,
+    };
+  }
+  // Valida senha + confirmacao; retorna o hash (ou undefined se vazia).
+  async function passwordHashFrom(pass, pass2, required) {
+    if (!pass && !pass2) {
+      if (required) throw new Error('Informe a senha do funcionário.');
+      return undefined;
+    }
+    if (pass !== pass2) throw new Error('A confirmação não confere com a senha.');
+    window.DIHMECAuth.validatePasswordComplexity(pass);
+    return window.DIHMECAuth.hashPassword(pass);
+  }
+
+  // Janela modal simples. `onSave` recebe (overlay, close) e pode lancar
+  // Error para exibir a mensagem.
+  function openModal({ title, body, saveLabel, onSave, extraButtons }) {
+    const ov = document.createElement('div');
+    ov.className = 'ponto-modal-overlay';
+    ov.innerHTML = `
+      <form class="ponto-modal" role="dialog" aria-modal="true" autocomplete="off">
+        <div class="ponto-modal-head"><h3>${esc(title)}</h3>
+          <button type="button" class="ponto-modal-close" aria-label="Fechar">×</button></div>
+        <div class="ponto-modal-body">${body}<div class="ponto-form-msg" data-modal-msg></div></div>
+        <div class="ponto-modal-foot">
+          ${extraButtons || ''}<span class="spacer"></span>
+          <button type="button" class="btn-action btn-ponto-sec" data-modal-cancel>Cancelar</button>
+          <button type="submit" class="btn-action btn-edit">${esc(saveLabel || 'Salvar')}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(ov);
+    const form = ov.querySelector('form');
+    const msg = ov.querySelector('[data-modal-msg]');
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+    document.addEventListener('keydown', onKey);
+    ov.querySelector('.ponto-modal-close').addEventListener('click', close);
+    ov.querySelector('[data-modal-cancel]').addEventListener('click', close);
+    ov.addEventListener('mousedown', (e) => { if (e.target === ov) close(); });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setMsg(msg, '', null);
+      const btn = form.querySelector('button[type=submit]');
+      btn.disabled = true;
+      try { await onSave(ov, close); }
+      catch (err) { setMsg(msg, err.message || 'Erro ao salvar.', 'error'); }
+      finally { btn.disabled = false; }
+    });
+    const first = ov.querySelector('input:not([type=hidden]), select');
+    if (first) first.focus();
+    return { ov, msg, close };
+  }
+
   function nameOf(email) {
     const f = state.funcionarios.find((x) => x.email === email);
     if (f) return f.name;
@@ -239,33 +376,22 @@
         <div class="ponto-section-title">Gestão de Ponto</div>
 
         <div class="form-section">
-          <h2 id="ponto-func-form-title">Cadastrar funcionário</h2>
+          <h2>Cadastrar funcionário</h2>
           <form id="ponto-func-form" autocomplete="off">
             <div class="ponto-grid">
+              ${funcFieldsHTML('pf', {})}
+              <div class="ponto-subtitle">Acesso</div>
               <div class="form-group">
-                <label for="pf-name">Nome completo</label>
-                <input type="text" id="pf-name" required placeholder="Ex.: João da Silva" />
-              </div>
-              <div class="form-group">
-                <label for="pf-login">Login (usuário ou e-mail)</label>
-                <input type="text" id="pf-login" required placeholder="Ex.: joao.silva" autocapitalize="none" spellcheck="false" />
-              </div>
-              <div class="form-group">
-                <label for="pf-cargo">Cargo</label>
-                <input type="text" id="pf-cargo" placeholder="Ex.: Mecânico" />
-              </div>
-              <div class="form-group">
-                <label for="pf-pass">Senha <small id="pf-pass-hint">(mín. 8, maiúsc., número e especial)</small></label>
+                <label for="pf-pass">Senha * <small>(mín. 8, maiúsc., número e especial)</small></label>
                 <input type="password" id="pf-pass" autocomplete="new-password" />
               </div>
               <div class="form-group">
-                <label for="pf-pass2">Confirmar senha</label>
+                <label for="pf-pass2">Confirmar senha *</label>
                 <input type="password" id="pf-pass2" autocomplete="new-password" />
               </div>
             </div>
             <div class="ponto-actions">
               <button type="submit" class="btn-action btn-edit" id="pf-submit">Cadastrar</button>
-              <button type="button" class="btn-action btn-ponto-sec" id="pf-cancel" style="display:none">Cancelar edição</button>
             </div>
             <div class="ponto-form-msg" id="pf-msg"></div>
           </form>
@@ -275,8 +401,8 @@
           <div class="customers-list-header">Funcionários cadastrados</div>
           <div class="ponto-table-wrap">
             <table class="customers-table">
-              <thead><tr><th>Nome</th><th>Login</th><th>Cargo</th><th>Status</th><th>Ações</th></tr></thead>
-              <tbody id="ponto-func-body"><tr><td colspan="5" class="empty-state">Carregando...</td></tr></tbody>
+              <thead><tr><th>Nome</th><th>Login</th><th>Cargo</th><th>Jornada</th><th>Telefone</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody id="ponto-func-body"><tr><td colspan="7" class="empty-state">Carregando...</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -308,19 +434,20 @@
           <div class="ponto-table-wrap">
             <table class="customers-table">
               <thead><tr>
-                <th>Funcionário</th><th>Data</th><th>Entrada</th><th>Saída almoço</th><th>Retorno almoço</th><th>Saída</th><th>Horas</th><th>Obs.</th><th>Ações</th>
+                <th>Funcionário</th><th>Data</th><th>Entrada</th><th>Saída almoço</th><th>Retorno almoço</th><th>Saída</th><th>Horas</th><th>Saldo</th><th>Obs.</th><th>Ações</th>
               </tr></thead>
-              <tbody id="pr-body"><tr><td colspan="9" class="empty-state">Clique em "Gerar relatório".</td></tr></tbody>
+              <tbody id="pr-body"><tr><td colspan="10" class="empty-state">Clique em "Gerar relatório".</td></tr></tbody>
               <tfoot><tr>
-                <td colspan="6" style="text-align:right;font-weight:600">Total de horas:</td>
-                <td id="pr-total" style="font-weight:700">—</td><td colspan="2"></td>
+                <td colspan="6" style="text-align:right;font-weight:600">Totais:</td>
+                <td id="pr-total" style="font-weight:700">—</td><td id="pr-saldo" style="font-weight:700">—</td><td colspan="2"></td>
               </tr></tfoot>
             </table>
           </div>
         </div>
 
         <div class="form-section" id="ponto-adj-section">
-          <h2>Ajustar / lançar registro manual</h2>
+          <h2>Lançar registro de um dia</h2>
+          <p style="font-size:0.8125rem;color:var(--text-secondary);margin:-8px 0 12px">Para dias sem nenhuma marcação. Para corrigir um dia que já aparece no relatório, use o botão <strong>Ajustar</strong> da linha.</p>
           <form id="ponto-adj-form" autocomplete="off">
             <div class="ponto-grid">
               <div class="form-group">
@@ -418,6 +545,8 @@
         <td>${esc(f.name)}</td>
         <td>${esc(f.email)}</td>
         <td>${esc(f.cargo || '—')}</td>
+        <td>${esc(jornadaText(f.jornada))}</td>
+        <td>${esc(f.telefone || '—')}</td>
         <td><span class="ponto-badge ${f.ativo ? 'on' : 'off'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
         <td><div class="action-buttons">
           <button type="button" class="btn-action btn-edit" data-func-edit="${esc(f.email)}">Editar</button>
@@ -425,7 +554,7 @@
           <button type="button" class="btn-action btn-delete" data-func-del="${esc(f.email)}">Excluir</button>
         </div></td>
       </tr>`).join('')
-      : '<tr><td colspan="5" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
+      : '<tr><td colspan="7" class="empty-state">Nenhum funcionário cadastrado.</td></tr>';
 
     // Selects do relatorio e do ajuste: funcionarios + demais usuarios
     // que tenham marcado ponto (ex.: admin que tambem bate ponto).
@@ -448,15 +577,21 @@
     if (!body) return;
     const rows = state.report;
     let total = 0;
+    let saldoTotal = 0;
+    let temSaldo = false;
     body.innerHTML = rows.length ? rows.map((r) => {
       const w = workedMinutes(r);
       if (w != null) total += w;
+      const prev = expectedMinutes(r.email);
+      const saldo = w != null && prev != null ? w - prev : null;
+      if (saldo != null) { saldoTotal += saldo; temSaldo = true; }
       return `
         <tr>
           <td>${esc(nameOf(r.email))}</td>
           <td>${fmtDate(r.dia)}</td>
           ${STEPS.map((s) => `<td>${esc(r[s.id] || '—')}</td>`).join('')}
           <td><strong>${fmtMin(w)}</strong></td>
+          <td title="${prev != null ? 'Previsto: ' + fmtMin(prev) : 'Sem jornada cadastrada'}">${saldoHTML(saldo)}</td>
           <td>${esc(r.obs || r.manual_motivo || '')}${r.ajustado_por ? ` <span class="ponto-adj" title="Ajustado por ${esc(r.ajustado_por)}">(ajustado)</span>` : ''}${manualBadge(r)}</td>
           <td><div class="action-buttons">
             <button type="button" class="btn-action btn-edit" data-adj="${esc(r.email)}|${esc(r.dia)}">Ajustar</button>
@@ -465,9 +600,11 @@
           </div></td>
         </tr>`;
     }).join('')
-      : '<tr><td colspan="9" class="empty-state">Nenhum registro no período.</td></tr>';
+      : '<tr><td colspan="10" class="empty-state">Nenhum registro no período.</td></tr>';
     const t = document.getElementById('pr-total');
     if (t) t.textContent = fmtMin(total);
+    const s = document.getElementById('pr-saldo');
+    if (s) s.innerHTML = temSaldo ? saldoHTML(saldoTotal) : '—';
   }
 
   // ---------- data ----------
@@ -510,7 +647,7 @@
     const email = $('#pr-func').value;
     if (!from || !to) return;
     const body = document.getElementById('pr-body');
-    if (body) body.innerHTML = '<tr><td colspan="9" class="empty-state">Carregando...</td></tr>';
+    if (body) body.innerHTML = '<tr><td colspan="10" class="empty-state">Carregando...</td></tr>';
     try {
       const data = await api(`/api/ponto?from=${from}&to=${to}&email=${encodeURIComponent(email)}`);
       state.report = data.records || [];
@@ -520,7 +657,7 @@
         (email ? ' — ' + nameOf(email) : '');
     } catch (e) {
       state.report = [];
-      if (body) body.innerHTML = `<tr><td colspan="9" class="empty-state">${esc(e.message)}</td></tr>`;
+      if (body) body.innerHTML = `<tr><td colspan="10" class="empty-state">${esc(e.message)}</td></tr>`;
       return;
     }
     renderReport();
@@ -529,18 +666,23 @@
   function exportCSV() {
     if (!state.report.length) { alert('Gere o relatório antes de exportar.'); return; }
     const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-    const head = ['Funcionário', 'Login', 'Data', 'Entrada', 'Saída almoço', 'Retorno almoço', 'Saída', 'Horas', 'Observação', 'Ajustado por', 'Marcação manual', 'Motivo manual', 'Aprovado por'];
+    const head = ['Funcionário', 'Login', 'Data', 'Entrada', 'Saída almoço', 'Retorno almoço', 'Saída', 'Horas', 'Previsto', 'Saldo', 'Observação', 'Ajustado por', 'Marcação manual', 'Motivo manual', 'Aprovado por'];
     let total = 0;
+    let saldoTotal = 0;
     const lines = state.report.map((r) => {
       const w = workedMinutes(r);
       if (w != null) total += w;
+      const prev = expectedMinutes(r.email);
+      const saldo = w != null && prev != null ? w - prev : null;
+      if (saldo != null) saldoTotal += saldo;
       const [y, m, d] = r.dia.split('-');
       return [nameOf(r.email), r.email, `${d}/${m}/${y}`, r.entrada, r.almoco_saida, r.almoco_retorno, r.saida,
-        w == null ? '' : fmtMin(w), r.obs, r.ajustado_por,
+        w == null ? '' : fmtMin(w), prev == null ? '' : fmtMin(prev), saldo == null ? '' : fmtSaldo(saldo),
+        r.obs, r.ajustado_por,
         (r.manual_campos || '').split(',').filter(Boolean).map((c) => (STEPS.find((s) => s.id === c) || {}).label || c).join(', '),
         r.manual_motivo, r.manual_aprovado_por].map(cell).join(';');
     });
-    lines.push(['', '', '', '', '', '', 'Total', fmtMin(total), '', '', '', '', ''].map(cell).join(';'));
+    lines.push(['', '', '', '', '', '', 'Total', fmtMin(total), '', fmtSaldo(saldoTotal), '', '', '', '', ''].map(cell).join(';'));
     const csv = '﻿' + head.map(cell).join(';') + '\r\n' + lines.join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
@@ -551,17 +693,97 @@
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
 
-  // ---------- eventos ----------
-  let editingEmail = null;
-  function resetFuncForm() {
-    editingEmail = null;
-    $('#ponto-func-form').reset();
-    $('#pf-login').readOnly = false;
-    $('#ponto-func-form-title').textContent = 'Cadastrar funcionário';
-    $('#pf-submit').textContent = 'Cadastrar';
-    $('#pf-cancel').style.display = 'none';
-    $('#pf-pass-hint').textContent = '(mín. 8, maiúsc., número e especial)';
+  // ---------- janelas de edicao (gestor) ----------
+  // Editar todos os dados do funcionario: cadastro, jornada, login,
+  // status e senha.
+  function openEditFuncionario(f, histFrom) {
+    openModal({
+      title: 'Editar funcionário — ' + f.name,
+      saveLabel: 'Salvar alterações',
+      body: `
+        <div class="ponto-grid">
+          ${funcFieldsHTML('pe', f)}
+          <div class="ponto-subtitle">Acesso</div>
+          <div class="form-group">
+            <label for="pe-pass">Nova senha <small>(em branco = manter)</small></label>
+            <input type="password" id="pe-pass" autocomplete="new-password" />
+          </div>
+          <div class="form-group">
+            <label for="pe-pass2">Confirmar nova senha</label>
+            <input type="password" id="pe-pass2" autocomplete="new-password" />
+          </div>
+          <div class="form-group">
+            <label class="ponto-check"><input type="checkbox" id="pe-ativo" ${f.ativo ? 'checked' : ''} /> Acesso ativo</label>
+          </div>
+        </div>`,
+      onSave: async (ov, close) => {
+        const data = readFuncFields('pe');
+        if (!data.name || !data.login) throw new Error('Informe nome e login.');
+        const body = Object.assign({}, data, {
+          email: f.email,
+          newLogin: data.login,
+          ativo: ov.querySelector('#pe-ativo').checked,
+          passwordHash: await passwordHashFrom(ov.querySelector('#pe-pass').value, ov.querySelector('#pe-pass2').value, false),
+        });
+        delete body.login;
+        if (body.newLogin !== f.email && !confirm(`Trocar o login de "${f.email}" para "${body.newLogin}"? O funcionário passa a entrar com o novo login e o histórico de ponto é mantido.`)) return;
+        if (f.ativo && !body.ativo && !confirm(`Desativar o acesso de ${f.name}?`)) return;
+        await api('/api/funcionarios', { method: 'PUT', body });
+        close();
+        await loadFuncionarios();
+        if (state.report.length) await loadReport();
+      },
+    });
   }
+
+  // Ajustar os horarios de um dia ja registrado.
+  function openAjusteDia(r, histFrom) {
+    const [y, m, d] = r.dia.split('-');
+    const f = funcOf(r.email);
+    const manual = r.manual_campos
+      ? `<p style="font-size:0.8125rem;margin:0 0 10px">${manualBadge(r)} Motivo: ${esc(r.manual_motivo || '—')}</p>` : '';
+    const { ov, close: closeAjuste } = openModal({
+      title: `Ajustar ponto — ${nameOf(r.email)} — ${d}/${m}/${y}`,
+      saveLabel: 'Salvar horários',
+      extraButtons: '<button type="button" class="btn-action btn-delete" data-modal-del>Excluir dia</button>',
+      body: `
+        ${manual}
+        ${f && f.jornada ? `<p style="font-size:0.8125rem;color:var(--text-secondary);margin:0 0 10px">Jornada prevista: ${esc(jornadaText(f.jornada))}</p>` : ''}
+        <div class="ponto-grid">
+          ${STEPS.map((s) => `
+          <div class="form-group"><label for="pj-${s.id}">${s.label}</label>
+            <input type="time" id="pj-${s.id}" value="${esc(r[s.id] || '')}" /></div>`).join('')}
+          <div class="form-group" style="grid-column: 1 / -1">
+            <label for="pj-obs">Observação / motivo do ajuste</label>
+            <input type="text" id="pj-obs" maxlength="500" value="${esc(r.obs || '')}" placeholder="Ex.: esqueceu de marcar a saída" />
+          </div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-secondary);margin-top:4px">Deixe um horário em branco para apagá-lo. Salvar também aprova marcações manuais pendentes.</p>`,
+      onSave: async (ov2, close) => {
+        const body = { email: r.email, dia: r.dia, obs: ov2.querySelector('#pj-obs').value.trim() };
+        STEPS.forEach((s) => { body[s.id] = ov2.querySelector('#pj-' + s.id).value || null; });
+        const seq = STEPS.map((s) => body[s.id]).filter(Boolean);
+        for (let i = 1; i < seq.length; i++) {
+          if (seq[i] <= seq[i - 1]) throw new Error('Horários fora de ordem.');
+        }
+        await api('/api/ponto', { method: 'PUT', body });
+        close();
+        await loadReport();
+        if (r.email === state.session.email) { loadToday(); loadHistory(histFrom); }
+      },
+    });
+    ov.querySelector('[data-modal-del]').addEventListener('click', async () => {
+      if (!confirm(`Excluir o registro de ${nameOf(r.email)} em ${d}/${m}/${y}?`)) return;
+      try {
+        await api(`/api/ponto?email=${encodeURIComponent(r.email)}&dia=${r.dia}`, { method: 'DELETE' });
+        closeAjuste();
+        await loadReport();
+        if (r.email === state.session.email) { loadToday(); loadHistory(histFrom); }
+      } catch (err) { alert(err.message); }
+    });
+  }
+
+  // ---------- eventos ----------
 
   function wire(root, histFrom) {
     root.addEventListener('click', async (e) => {
@@ -591,20 +813,8 @@
 
       const edit = e.target.closest('[data-func-edit]');
       if (edit) {
-        const f = state.funcionarios.find((x) => x.email === edit.getAttribute('data-func-edit'));
-        if (!f) return;
-        editingEmail = f.email;
-        $('#pf-name').value = f.name;
-        $('#pf-login').value = f.email;
-        $('#pf-login').readOnly = true;
-        $('#pf-cargo').value = f.cargo || '';
-        $('#pf-pass').value = '';
-        $('#pf-pass2').value = '';
-        $('#ponto-func-form-title').textContent = 'Editar funcionário — ' + f.name;
-        $('#pf-submit').textContent = 'Salvar alterações';
-        $('#pf-cancel').style.display = '';
-        $('#pf-pass-hint').textContent = '(deixe em branco para manter)';
-        $('#ponto-func-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const f = funcOf(edit.getAttribute('data-func-edit'));
+        if (f) openEditFuncionario(f, histFrom);
         return;
       }
 
@@ -627,7 +837,6 @@
         if (!confirm(`Excluir o funcionário ${f.name}? Os registros de ponto dele serão mantidos.`)) return;
         try {
           await api('/api/funcionarios?email=' + encodeURIComponent(f.email), { method: 'DELETE' });
-          if (editingEmail === f.email) resetFuncForm();
           await loadFuncionarios();
         } catch (err) { alert(err.message); }
         return;
@@ -636,17 +845,8 @@
       const adj = e.target.closest('[data-adj]');
       if (adj) {
         const [email, dia] = adj.getAttribute('data-adj').split('|');
-        const r = state.report.find((x) => x.email === email && x.dia === dia) || {};
-        const sel = $('#pa-func');
-        if (![...sel.options].some((o) => o.value === email)) {
-          sel.insertAdjacentHTML('beforeend', `<option value="${esc(email)}">${esc(nameOf(email))}</option>`);
-        }
-        sel.value = email;
-        $('#pa-dia').value = dia;
-        STEPS.forEach((s) => { $('#pa-' + s.id).value = r[s.id] || ''; });
-        $('#pa-obs').value = r.obs || '';
-        setMsg($('#pa-msg'), '', null);
-        $('#ponto-adj-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const r = state.report.find((x) => x.email === email && x.dia === dia) || { email, dia };
+        openAjusteDia(r, histFrom);
         return;
       }
 
@@ -724,33 +924,18 @@
 
     if (!state.manager) return;
 
-    $('#pf-cancel').addEventListener('click', resetFuncForm);
     $('#ponto-func-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const msg = $('#pf-msg');
       setMsg(msg, '', null);
-      const name = $('#pf-name').value.trim();
-      const login = $('#pf-login').value.trim().toLowerCase();
-      const cargo = $('#pf-cargo').value.trim();
-      const pass = $('#pf-pass').value;
-      const pass2 = $('#pf-pass2').value;
+      const data = readFuncFields('pf');
       try {
-        if (!name || !login) throw new Error('Informe nome e login.');
-        if (!editingEmail && !pass) throw new Error('Informe a senha do funcionário.');
-        if (pass || pass2) {
-          if (pass !== pass2) throw new Error('A confirmação não confere com a senha.');
-          window.DIHMECAuth.validatePasswordComplexity(pass);
-        }
-        const passwordHash = pass ? await window.DIHMECAuth.hashPassword(pass) : undefined;
+        if (!data.name || !data.login) throw new Error('Informe nome e login.');
+        data.passwordHash = await passwordHashFrom($('#pf-pass').value, $('#pf-pass2').value, true);
         $('#pf-submit').disabled = true;
-        if (editingEmail) {
-          await api('/api/funcionarios', { method: 'PUT', body: { email: editingEmail, name, cargo, passwordHash } });
-          setMsg(msg, 'Funcionário atualizado.', 'ok');
-        } else {
-          await api('/api/funcionarios', { method: 'POST', body: { name, login, cargo, passwordHash } });
-          setMsg(msg, `Funcionário cadastrado. Login: ${login}`, 'ok');
-        }
-        resetFuncForm();
+        await api('/api/funcionarios', { method: 'POST', body: data });
+        setMsg(msg, `Funcionário cadastrado. Login: ${data.login}`, 'ok');
+        $('#ponto-func-form').reset();
         await loadFuncionarios();
       } catch (err) {
         setMsg(msg, err.message || 'Erro ao salvar.', 'error');
