@@ -18,6 +18,18 @@
     { id: 'saida', label: 'Saída', icon: '🔴' },
   ];
 
+  const MANUAL_MAX_DIAS = 7; // mesmo limite de api/ponto.js
+
+  // Selo de marcacao manual: quais campos e se ja foi aprovada.
+  function manualBadge(r) {
+    if (!r.manual_campos) return '';
+    const campos = r.manual_campos.split(',').map((c) => (STEPS.find((s) => s.id === c) || {}).label || c).join(', ');
+    const ok = !!r.manual_aprovado_por;
+    const title = `Manual: ${campos}` + (r.manual_motivo ? ` — ${r.manual_motivo}` : '') +
+      (ok ? ` (aprovado por ${r.manual_aprovado_por})` : '');
+    return ` <span class="ponto-manual ${ok ? 'ok' : 'pend'}" title="${esc(title)}">${ok ? 'manual ✔' : 'manual – pendente'}</span>`;
+  }
+
   const STYLE = `
     .ponto-wrap { display: flex; flex-direction: column; gap: 20px; margin-top: 8px; }
     .ponto-clock-card { text-align: center; }
@@ -48,6 +60,13 @@
     .ponto-table-wrap { overflow-x: auto; }
     .ponto-table-wrap .customers-table td, .ponto-table-wrap .customers-table th { white-space: nowrap; }
     .ponto-adj { color: #b26a00; font-size: 0.75rem; }
+    .ponto-manual { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .ponto-manual.pend { background: rgba(178,106,0,0.14); color: #b26a00; }
+    .ponto-manual.ok { background: rgba(30,126,52,0.12); color: #1e7e34; }
+    .ponto-manual-toggle { margin-top: 16px; background: none; border: none; color: var(--accent); font-weight: 600; cursor: pointer; font-size: 0.875rem; text-decoration: underline; }
+    .ponto-manual-form { margin-top: 12px; text-align: left; border-top: 1px dashed var(--border); padding-top: 14px; }
+    .ponto-manual-form[hidden] { display: none; }
+    .ponto-manual-form p { font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 10px; }
     .ponto-section-title { margin: 8px 0 -6px; font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
     .ponto-form-msg { font-size: 0.875rem; margin-top: 6px; min-height: 1.2em; }
     .ponto-form-msg.ok { color: #1e7e34; }
@@ -61,13 +80,12 @@
       .ponto-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .ponto-clock { font-size: 2.25rem; }
     }
-    /* Login de funcionario no celular: so a aba de ponto, sem sidebar
-       nem banner (o restante do app nao eh responsivo). */
-    @media (max-width: 768px) {
-      body.ponto-only .sidebar, body.ponto-only #dihmec-banner, body.ponto-only .page_header { display: none; }
-      body.ponto-only .main-content { margin-left: 0; padding: 56px 10px 16px; min-width: 0; width: 100%; }
-      body.ponto-only div.main_page { display: block; }
-      body.ponto-only .content_section_text { padding-left: 10px; padding-right: 10px; }
+    /* Login de funcionario no celular: tem uma aba so, entao dispensa o
+       menu gaveta e o banner (layout geral em index.html "Responsivo"). */
+    @media (max-width: 900px) {
+      body.ponto-only .sidebar, body.ponto-only .mobile-menu-btn,
+      body.ponto-only #dihmec-banner { display: none; }
+      body.ponto-only .main-content { padding-top: 56px; }
     }
   `;
 
@@ -174,6 +192,35 @@
           <div class="ponto-date" id="ponto-date"></div>
           <div class="ponto-steps" id="ponto-steps"></div>
           <div class="ponto-msg" id="ponto-msg"></div>
+          <button type="button" class="ponto-manual-toggle" id="pm-toggle">Esqueceu de marcar? Lançar marcação manual</button>
+          <form class="ponto-manual-form" id="pm-form" autocomplete="off" hidden>
+            <p>Use apenas se esqueceu de bater o ponto. A marcação fica <strong>pendente de aprovação</strong> do gestor. Permitido até ${MANUAL_MAX_DIAS} dias atrás.</p>
+            <div class="ponto-grid">
+              <div class="form-group">
+                <label for="pm-dia">Data</label>
+                <input type="date" id="pm-dia" required value="${today}" min="${addDays(today, -MANUAL_MAX_DIAS)}" max="${today}" />
+              </div>
+              <div class="form-group">
+                <label for="pm-tipo">Marcação</label>
+                <select id="pm-tipo" required>
+                  ${STEPS.map((s) => `<option value="${s.id}">${s.label}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="pm-hora">Horário</label>
+                <input type="time" id="pm-hora" required />
+              </div>
+              <div class="form-group" style="grid-column: 1 / -1">
+                <label for="pm-motivo">Motivo (obrigatório)</label>
+                <input type="text" id="pm-motivo" maxlength="300" required placeholder="Ex.: esqueci de marcar a entrada" />
+              </div>
+            </div>
+            <div class="ponto-actions">
+              <button type="submit" class="btn-action btn-edit">Enviar marcação manual</button>
+              <button type="button" class="btn-action btn-ponto-sec" id="pm-cancel">Cancelar</button>
+            </div>
+            <div class="ponto-form-msg" id="pm-msg"></div>
+          </form>
         </div>
 
         <div class="customers-list" style="margin-top:0">
@@ -358,7 +405,7 @@
       <tr>
         <td>${fmtDate(r.dia)}</td>
         ${STEPS.map((s) => `<td>${esc(r[s.id] || '—')}</td>`).join('')}
-        <td><strong>${fmtMin(workedMinutes(r))}</strong>${r.ajustado_por ? ' <span class="ponto-adj" title="Ajustado pelo gestor">(ajustado)</span>' : ''}</td>
+        <td><strong>${fmtMin(workedMinutes(r))}</strong>${r.ajustado_por ? ' <span class="ponto-adj" title="Ajustado pelo gestor">(ajustado)</span>' : ''}${manualBadge(r)}</td>
       </tr>`).join('');
   }
 
@@ -410,9 +457,10 @@
           <td>${fmtDate(r.dia)}</td>
           ${STEPS.map((s) => `<td>${esc(r[s.id] || '—')}</td>`).join('')}
           <td><strong>${fmtMin(w)}</strong></td>
-          <td>${esc(r.obs || '')}${r.ajustado_por ? ` <span class="ponto-adj" title="Ajustado por ${esc(r.ajustado_por)}">(ajustado)</span>` : ''}</td>
+          <td>${esc(r.obs || r.manual_motivo || '')}${r.ajustado_por ? ` <span class="ponto-adj" title="Ajustado por ${esc(r.ajustado_por)}">(ajustado)</span>` : ''}${manualBadge(r)}</td>
           <td><div class="action-buttons">
             <button type="button" class="btn-action btn-edit" data-adj="${esc(r.email)}|${esc(r.dia)}">Ajustar</button>
+            ${r.manual_campos && !r.manual_aprovado_por ? `<button type="button" class="btn-action btn-ponto-ok" data-aprovar="${esc(r.email)}|${esc(r.dia)}">Aprovar</button>` : ''}
             <button type="button" class="btn-action btn-delete" data-adj-del="${esc(r.email)}|${esc(r.dia)}">Excluir</button>
           </div></td>
         </tr>`;
@@ -481,16 +529,18 @@
   function exportCSV() {
     if (!state.report.length) { alert('Gere o relatório antes de exportar.'); return; }
     const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-    const head = ['Funcionário', 'Login', 'Data', 'Entrada', 'Saída almoço', 'Retorno almoço', 'Saída', 'Horas', 'Observação', 'Ajustado por'];
+    const head = ['Funcionário', 'Login', 'Data', 'Entrada', 'Saída almoço', 'Retorno almoço', 'Saída', 'Horas', 'Observação', 'Ajustado por', 'Marcação manual', 'Motivo manual', 'Aprovado por'];
     let total = 0;
     const lines = state.report.map((r) => {
       const w = workedMinutes(r);
       if (w != null) total += w;
       const [y, m, d] = r.dia.split('-');
       return [nameOf(r.email), r.email, `${d}/${m}/${y}`, r.entrada, r.almoco_saida, r.almoco_retorno, r.saida,
-        w == null ? '' : fmtMin(w), r.obs, r.ajustado_por].map(cell).join(';');
+        w == null ? '' : fmtMin(w), r.obs, r.ajustado_por,
+        (r.manual_campos || '').split(',').filter(Boolean).map((c) => (STEPS.find((s) => s.id === c) || {}).label || c).join(', '),
+        r.manual_motivo, r.manual_aprovado_por].map(cell).join(';');
     });
-    lines.push(['', '', '', '', '', '', 'Total', fmtMin(total), '', ''].map(cell).join(';'));
+    lines.push(['', '', '', '', '', '', 'Total', fmtMin(total), '', '', '', '', ''].map(cell).join(';'));
     const csv = '﻿' + head.map(cell).join(';') + '\r\n' + lines.join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
@@ -600,6 +650,18 @@
         return;
       }
 
+      const aprovar = e.target.closest('[data-aprovar]');
+      if (aprovar) {
+        const [email, dia] = aprovar.getAttribute('data-aprovar').split('|');
+        aprovar.disabled = true;
+        try {
+          await api('/api/ponto', { method: 'PUT', body: { aprovar: true, email, dia } });
+          await loadReport();
+          if (email === state.session.email) loadHistory(histFrom);
+        } catch (err) { alert(err.message); aprovar.disabled = false; }
+        return;
+      }
+
       const adjDel = e.target.closest('[data-adj-del]');
       if (adjDel) {
         const [email, dia] = adjDel.getAttribute('data-adj-del').split('|');
@@ -610,6 +672,53 @@
           await loadReport();
           if (email === state.session.email) { loadToday(); loadHistory(histFrom); }
         } catch (err) { alert(err.message); }
+      }
+    });
+
+    // Marcacao manual (qualquer usuario, para o proprio ponto)
+    const pmForm = $('#pm-form');
+    const pmToggle = $('#pm-toggle');
+    const closeManual = () => {
+      pmForm.hidden = true;
+      pmForm.reset();
+      setMsg($('#pm-msg'), '', null);
+      pmToggle.hidden = false;
+    };
+    pmToggle.addEventListener('click', () => {
+      pmForm.hidden = false;
+      pmToggle.hidden = true;
+      // Sugere o primeiro campo ainda vazio de hoje.
+      const next = nextStep(state.today);
+      if (next) $('#pm-tipo').value = next;
+      $('#pm-hora').focus();
+    });
+    $('#pm-cancel').addEventListener('click', closeManual);
+    pmForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = $('#pm-msg');
+      const body = {
+        manual: true,
+        dia: $('#pm-dia').value,
+        tipo: $('#pm-tipo').value,
+        hora: $('#pm-hora').value,
+        motivo: $('#pm-motivo').value.trim(),
+      };
+      if (!body.dia || !body.hora || !body.motivo) { setMsg(msg, 'Preencha data, horário e motivo.', 'error'); return; }
+      const label = STEPS.find((s) => s.id === body.tipo).label;
+      const [y, m, d] = body.dia.split('-');
+      if (!confirm(`Lançar "${label}" às ${body.hora} em ${d}/${m}/${y}?`)) return;
+      const btn = pmForm.querySelector('button[type=submit]');
+      btn.disabled = true;
+      try {
+        await api('/api/ponto', { method: 'POST', body });
+        closeManual();
+        setMsg($('#ponto-msg'), `✔ Marcação manual de "${label}" (${d}/${m}) enviada — pendente de aprovação.`, 'ok');
+        loadToday();
+        loadHistory(histFrom);
+      } catch (err) {
+        setMsg(msg, err.message || 'Falha ao lançar.', 'error');
+      } finally {
+        btn.disabled = false;
       }
     });
 

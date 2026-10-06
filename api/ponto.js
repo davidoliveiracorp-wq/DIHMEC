@@ -13,6 +13,12 @@ import {
 //                                                 qualquer funcionario (email vazio =
 //                                                 todos); os demais so os proprios.
 //   POST   /api/ponto  { tipo }                 -> marca o ponto (horario do servidor)
+//   POST   /api/ponto  { tipo, manual: true,    -> marcacao manual (esqueceu de bater):
+//                        dia, hora, motivo }       so preenche campo vazio, ate
+//                                                  MANUAL_MAX_DIAS atras, fica pendente
+//                                                  de aprovacao do gestor
+//   PUT    /api/ponto  { aprovar: true,         -> gestor aprova a marcacao manual
+//                        email, dia }
 //   PUT    /api/ponto  { email, dia, entrada,   -> ajuste manual (gestor). Horarios
 //                        almoco_saida, ...,        em 'HH:MM' (fuso de Sao Paulo) ou
 //                        obs }                     null para limpar.
@@ -21,6 +27,7 @@ const TZ = 'America/Sao_Paulo';
 const TIPOS = ['entrada', 'almoco_saida', 'almoco_retorno', 'saida'];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const MANUAL_MAX_DIAS = 7;
 
 function todaySP() {
   // en-CA formata como YYYY-MM-DD
@@ -35,7 +42,10 @@ const SELECT_COLS = `
   to_char(almoco_retorno AT TIME ZONE '${TZ}', 'HH24:MI') AS almoco_retorno,
   to_char(saida          AT TIME ZONE '${TZ}', 'HH24:MI') AS saida,
   obs,
-  ajustado_por
+  ajustado_por,
+  manual_campos,
+  manual_motivo,
+  manual_aprovado_por
 `;
 
 async function getRecord(email, dia) {
@@ -60,6 +70,29 @@ function validateNext(rec, tipo) {
     return null;
   }
   return 'Tipo de marcacao invalido.';
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Valida a marcacao manual: campo ainda vazio, sequencia respeitada e
+// horario em ordem cronologica com o que ja foi marcado no dia.
+function validateManual(rec, tipo, hora) {
+  const r = Object.assign({}, rec || {});
+  if (r[tipo]) return 'Esse horario ja foi registrado neste dia. Peca ajuste ao gestor.';
+  r[tipo] = hora;
+  if (r.almoco_saida && !r.entrada) return 'Lance a entrada antes da saida para almoco.';
+  if (r.almoco_retorno && !r.almoco_saida) return 'Lance a saida para almoco antes do retorno.';
+  if (r.saida && !r.entrada) return 'Lance a entrada antes da saida.';
+  if (r.saida && r.almoco_saida && !r.almoco_retorno) return 'Lance o retorno do almoco antes da saida.';
+  const seq = TIPOS.map((t) => r[t]).filter(Boolean);
+  for (let i = 1; i < seq.length; i++) {
+    if (seq[i] <= seq[i - 1]) return 'Horario fora de ordem com as marcacoes do dia.';
+  }
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -89,8 +122,44 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { tipo } = await readJsonBody(req);
+      const body = await readJsonBody(req);
+      const { tipo } = body;
       if (!TIPOS.includes(tipo)) return res.status(400).json({ error: 'Tipo de marcacao invalido.' });
+
+      if (body.manual) {
+        const dia = String(body.dia || '');
+        const hora = String(body.hora || '');
+        const motivo = String(body.motivo || '').trim().slice(0, 500);
+        const hoje = todaySP();
+        if (!DATE_RE.test(dia) || !TIME_RE.test(hora)) return res.status(400).json({ error: 'Informe data e horario.' });
+        if (!motivo) return res.status(400).json({ error: 'Informe o motivo da marcacao manual.' });
+        if (dia > hoje) return res.status(400).json({ error: 'Nao eh possivel lancar data futura.' });
+        if (dia < addDays(hoje, -MANUAL_MAX_DIAS)) {
+          return res.status(400).json({ error: `So eh possivel lancar ate ${MANUAL_MAX_DIAS} dias atras. Procure o gestor.` });
+        }
+        const nowHM = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
+        if (dia === hoje && hora > nowHM) return res.status(400).json({ error: 'Nao eh possivel lancar horario futuro.' });
+        const rec = await getRecord(me, dia);
+        const err = validateManual(rec, tipo, hora);
+        if (err) return res.status(409).json({ error: err });
+        const campos = Array.from(new Set(String((rec && rec.manual_campos) || '').split(',').filter(Boolean).concat(tipo))).join(',');
+        const motivos = [rec && rec.manual_motivo, `${tipo}: ${motivo}`].filter(Boolean).join(' | ').slice(0, 1000);
+        // `tipo` validado contra TIPOS — seguro interpolar.
+        const r = await sql.query(
+          `INSERT INTO ponto (email, dia, ${tipo}, manual_campos, manual_motivo, updated_at)
+           VALUES ($1, $2, ($2::date + $3::time) AT TIME ZONE '${TZ}', $4, $5, NOW())
+           ON CONFLICT (email, dia) DO UPDATE
+             SET ${tipo} = EXCLUDED.${tipo},
+                 manual_campos = EXCLUDED.manual_campos,
+                 manual_motivo = EXCLUDED.manual_motivo,
+                 manual_aprovado_por = NULL,
+                 updated_at = NOW()
+             WHERE ponto.${tipo} IS NULL`,
+          [me, dia, hora, campos, motivos]);
+        if (r.rowCount === 0) return res.status(409).json({ error: 'Marcacao ja registrada.' });
+        return res.status(200).json({ ok: true, dia, record: await getRecord(me, dia) });
+      }
+
       const dia = todaySP();
       const err = validateNext(await getRecord(me, dia), tipo);
       if (err) return res.status(409).json({ error: err });
@@ -115,6 +184,14 @@ export default async function handler(req, res) {
       const email = String(body.email || '').trim().toLowerCase();
       const dia = String(body.dia || '');
       if (!email || !DATE_RE.test(dia)) return res.status(400).json({ error: 'Informe funcionario e data.' });
+
+      if (req.method === 'PUT' && body.aprovar) {
+        const r = await sql`
+          UPDATE ponto SET manual_aprovado_por = ${me}, updated_at = NOW()
+          WHERE email = ${email} AND dia = ${dia} AND manual_campos IS NOT NULL`;
+        if (r.rowCount === 0) return res.status(404).json({ error: 'Nenhuma marcacao manual neste dia.' });
+        return res.status(200).json({ ok: true, record: await getRecord(email, dia) });
+      }
 
       if (req.method === 'DELETE') {
         await sql`DELETE FROM ponto WHERE email = ${email} AND dia = ${dia}`;
@@ -145,6 +222,8 @@ export default async function handler(req, res) {
            saida = EXCLUDED.saida,
            obs = EXCLUDED.obs,
            ajustado_por = EXCLUDED.ajustado_por,
+           manual_aprovado_por = CASE WHEN ponto.manual_campos IS NOT NULL
+                                      THEN EXCLUDED.ajustado_por END,
            updated_at = NOW()`,
         [email, dia, ...times, obs, me]);
       return res.status(200).json({ ok: true, record: await getRecord(email, dia) });

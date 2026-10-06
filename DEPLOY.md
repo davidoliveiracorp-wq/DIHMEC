@@ -66,7 +66,9 @@ Logue de qualquer maquina com:
   `dihmec_users`/`dihmec_permissions` para nao-super-admins.
 - **`api/ponto.js`** — controle de ponto (marcar entrada / saida almoco /
   retorno almoco / saida com o relogio do servidor, historico, relatorio,
-  ajuste manual e exclusao pelo gestor).
+  ajuste manual e exclusao pelo gestor). O funcionario tambem pode
+  lancar uma marcacao manual (esqueceu de bater) ate 7 dias atras, com
+  motivo; ela fica pendente ate o gestor aprovar ou ajustar.
 - **`api/funcionarios.js`** — cadastro de funcionarios (role
   `funcionario`). Gestor = super admin ou usuario com a permissao
   "Gestao de Ponto". Funcionario so ve a aba "Controle de Ponto" e o
@@ -102,6 +104,9 @@ CREATE TABLE ponto (
   saida TIMESTAMPTZ,
   obs TEXT,
   ajustado_por TEXT,
+  manual_campos TEXT,           -- campos lancados manualmente pelo funcionario
+  manual_motivo TEXT,
+  manual_aprovado_por TEXT,     -- NULL = pendente de aprovacao do gestor
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (email, dia)
 );

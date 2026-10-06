@@ -1109,12 +1109,89 @@
       -webkit-print-color-adjust: exact;
     }
   }
+
+  /* ===== Responsivo (celular / tablet) =====
+     Ate 900px a sidebar vira um menu "gaveta" aberto pelo botao ☰. */
+  .mobile-menu-btn, .sidebar-backdrop { display: none; }
+
+  @media (max-width: 900px) {
+    .container { display: block; }
+
+    .mobile-menu-btn {
+      display: flex; align-items: center; justify-content: center;
+      position: fixed; top: 10px; left: 10px; z-index: 1101;
+      width: 44px; height: 44px;
+      border: none; border-radius: 12px;
+      background: #1a1a1a; color: #fff;
+      font-size: 22px; line-height: 1; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .sidebar {
+      position: fixed; top: 0; left: 0; z-index: 1100;
+      width: 270px; max-width: 85vw;
+      height: 100vh; height: 100dvh;
+      transform: translateX(-105%);
+      transition: transform 0.25s ease;
+    }
+    body.sidebar-open .sidebar { transform: translateX(0); }
+    body.sidebar-open .sidebar-backdrop {
+      display: block; position: fixed; inset: 0; z-index: 1099;
+      background: rgba(0,0,0,0.45);
+    }
+    body.sidebar-open { overflow: hidden; }
+
+    .main-content {
+      margin-left: 0; width: 100%; min-width: 0;
+      padding: 64px 10px 16px;
+    }
+    div.main_page { display: block; border-radius: var(--radius-md); }
+    .floating_element { float: none; }
+    div.content_section { margin: 0; }
+    div.content_section_text { padding: 4px 10px 12px; }
+    div.page_header { min-height: 0; padding: 20px 12px; }
+
+    /* Banner */
+    .dihmec-banner { padding: 16px 14px 10px; border-radius: 12px; }
+    .dihmec-banner-top { gap: 12px; }
+    .dihmec-logo-mark { width: 64px; height: 64px; }
+    .dihmec-tagline { font-size: 10px; letter-spacing: 0.6px; }
+    .dihmec-phone { font-size: 13px; }
+    .dihmec-brand-strip { gap: 12px; }
+    .dihmec-brand-strip img { height: 18px; }
+
+    /* Tabelas: rolam na horizontal dentro do card */
+    .customers-list { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .customers-table { min-width: 640px; }
+    .customers-table th, .customers-table td { padding: 10px 10px; }
+
+    /* Formularios e busca */
+    .form-section { padding: 14px; min-width: 0; }
+    form.customer_form { grid-template-columns: minmax(0, 1fr); }
+    .form-group input, .form-group select, .form-group textarea { font-size: 16px; } /* evita zoom no iOS */
+    .search-container { padding: 14px; }
+    .search-box { flex-wrap: wrap; }
+    .search-input-wrapper { flex: 1 1 100%; }
+    .search-btn, .clear-search { flex: 1; justify-content: center; }
+    .form-actions { flex-wrap: wrap; }
+    .form-actions button { flex: 1 1 auto; }
+    .action-buttons { flex-wrap: wrap; }
+  }
+
+  @media (max-width: 600px) {
+    .form-group[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+    .dihmec-banner-top { flex-direction: column; text-align: center; }
+    .dihmec-address { display: none; }
+    div.section_header { font-size: 100%; }
+  }
     </style>
   </head>
   <body>
     <div class="container">
+      <!-- Botao do menu no celular (ver CSS "Responsivo") -->
+      <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
       <!-- Menu Lateral -->
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
           <svg class="sidebar-logo-svg" viewBox="0 0 260 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DIHMEC">
             <defs>
@@ -2358,6 +2435,32 @@
           if (periodSelect) periodSelect.value = '';
         }
       }
+
+      // Menu gaveta no celular: abre pelo botao, fecha ao escolher um
+      // item, tocar fora ou apertar Esc.
+      function setMobileMenu(open) {
+        document.body.classList.toggle('sidebar-open', open);
+        const btn = document.getElementById('mobile-menu-btn');
+        if (btn) {
+          btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+          btn.textContent = open ? '✕' : '☰';
+        }
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('mobile-menu-btn');
+        if (btn) btn.addEventListener('click', () => setMobileMenu(!document.body.classList.contains('sidebar-open')));
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (backdrop) backdrop.addEventListener('click', () => setMobileMenu(false));
+        // Delegado: pega tambem o item "Administracao" injetado pelo auth.js
+        const menu = document.querySelector('.sidebar-menu');
+        if (menu) menu.addEventListener('click', (e) => {
+          if (!e.target.closest('.menu-item')) return;
+          setMobileMenu(false);
+          // Ao trocar de aba no celular, volta ao topo do formulario.
+          if (e.target.closest('.menu-item[data-form]') && window.innerWidth <= 900) window.scrollTo({ top: 0 });
+        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMobileMenu(false); });
+      });
 
       // Adicionar event listeners aos itens do menu
       document.addEventListener('DOMContentLoaded', function() {

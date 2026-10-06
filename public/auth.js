@@ -927,6 +927,21 @@
     @media (max-width: 640px) {
       .admin-pwd-form { grid-template-columns: 1fr; }
     }
+    /* Celular: modais ocupam a tela com margem pequena */
+    @media (max-width: 640px) {
+      .auth-overlay, .admin-overlay { padding: 10px; align-items: flex-start; overflow-y: auto; }
+      .auth-card { padding: 20px 16px 18px; max-height: none; }
+      .auth-banner { margin: -20px -16px 16px; padding: 14px 14px 8px; }
+      .auth-banner-mark svg { width: 110px; }
+      .auth-card input, .auth-card select, .auth-card textarea,
+      .admin-card input, .admin-card select { font-size: 16px; } /* evita zoom no iOS */
+      .admin-card { max-height: calc(100dvh - 20px); border-radius: 12px; }
+      .admin-header, .admin-body, .admin-footer { padding-left: 14px; padding-right: 14px; }
+      .admin-newuser-grid { grid-template-columns: 1fr; }
+      .admin-footer { flex-wrap: wrap; }
+      .auth-userbar { top: 10px; right: 10px; padding: 6px 10px; max-width: calc(100vw - 76px); }
+      .auth-userbar strong { display: inline-block; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    }
   `;
 
   function injectStyle() {
